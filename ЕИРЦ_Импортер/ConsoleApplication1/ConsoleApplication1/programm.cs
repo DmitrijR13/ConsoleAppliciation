@@ -4252,22 +4252,50 @@ namespace ConsoleApplication1
             #region 65
             else if (type == 65)
             {
-                var book = new XLWorkbook(@"C:\temp\для СОБИТС (ПВС)-1.xlsx");
-                for (int i = 34; i <= 151; i++)
-                {
-                    string nzp_kvar = pg.SelectNzpKvar(Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim());
-
+                Console.Write("Введите наименование базы:");
+                string database = Console.ReadLine();
+                var book = new XLWorkbook(@"C:\temp\часть 1 и 2.xlsx");
+                string nzp_kvar = "";
+                bool isClear = false;
+                for (int i = 2; i <= 11440; i++)
+                {     
+                    if(Convert.ToString(book.Worksheet(1).Row(i).Cell(32).Value).Trim() != "") 
+                        continue;  
+                    if(i%100 == 0)
+                        Console.WriteLine(i);           
+                    if (Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim() != "")
+                    {
+                        nzp_kvar = pg.SelectNzpKvar(database,
+                           Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim(),
+                           Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                           Convert.ToString(book.Worksheet(1).Row(i).Cell(4).Value).Trim());
+                        isClear = false;
+                        continue;
+                    }
+                       
                     if (nzp_kvar.Split('|')[0] == "0")
                     {
                         book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                        book.Worksheet(1).Row(i).Cell(21).Value = nzp_kvar.Split('|')[1];
+                        book.Worksheet(1).Row(i).Cell(31).Value = nzp_kvar.Split('|')[1];
+                    }
+                    else if (nzp_kvar.Split('|')[0] == "-1")
+                    {
+                        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Orange;
+                        book.Worksheet(1).Row(i).Cell(31).Value = nzp_kvar.Split('|')[1];
                     }
                     else
                     {
-                        int nzp_gil = pg.InsertGil();
+                        if (!isClear)
+                        {
+                            pg.ClearKart(database, nzp_kvar.Split('|')[0]);
+                            isClear = true;
+                        }
+
+                        book.Worksheet(1).Row(i).Cell(32).Value = "1";
+                        int nzp_gil = pg.InsertGil(database);
                         int nzp_rod = 0;
                         #region nzp_rod
-                        switch (Convert.ToString(book.Worksheet(1).Row(i).Cell(20).Value).Trim())
+                        switch (Convert.ToString(book.Worksheet(1).Row(i).Cell(100).Value).Trim())
                         {
                             case "брат":
                             {
@@ -4392,6 +4420,26 @@ namespace ConsoleApplication1
                         }
                         #endregion
                         int nzp_dok = 0;
+                        int tempDoc = 0;
+                        if (Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim() != "")
+                        {
+                            bool result =
+                                Int32.TryParse(Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim(),
+                                    out tempDoc);
+                            if (!result)
+                            {
+                                nzp_dok = 2;
+                            }
+                            else
+                            {
+                                nzp_dok = 10;
+                            }
+                        }
+                        else
+                        {
+                            nzp_dok = -1;
+                        }
+                        /*
                         #region nzp_dok
                         switch (Convert.ToString(book.Worksheet(1).Row(i).Cell(10).Value).Trim())
                         {
@@ -4422,30 +4470,55 @@ namespace ConsoleApplication1
                                 }
                         }
                         #endregion
-
+                        */
                         string serij = "";
-                        if (Convert.ToString(book.Worksheet(1).Row(i).Cell(11).Value).Trim() != "" && Convert.ToString(book.Worksheet(1).Row(i).Cell(11).Value).Trim().Length >= 4)
+                        if (Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim() != "" && Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim().Length >= 3)
                         {
-                            if (nzp_dok == 10)
-                                serij = Convert.ToString(book.Worksheet(1).Row(i).Cell(11).Value).Trim().Substring(0, 2) + " " + Convert.ToString(book.Worksheet(1).Row(i).Cell(11).Value).Trim().Substring(2, 2);
+                            if (nzp_dok == 10 &&
+                                Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim().Length >= 4)
+                                serij =
+                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim().Substring(0, 2) +
+                                    " " +
+                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim().Substring(2, 2);
                             else
-                                serij = Convert.ToString(book.Worksheet(1).Row(i).Cell(11).Value).Trim();
+                                serij = Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim();
                         }
-                        int nzp_kart = pg.InsertKart(nzp_gil, nzp_kvar.Split('|')[0],
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim().ToUpper(),
+
+                        string rem_ku = (Convert.ToString(book.Worksheet(1).Row(i).Cell(27).Value).Trim() != ""
+                            ? Convert.ToString(book.Worksheet(1).Row(i).Cell(27).Value).Trim() + ", "
+                            : "") +
+                            (Convert.ToString(book.Worksheet(1).Row(i).Cell(28).Value).Trim() != ""
+                            ? Convert.ToString(book.Worksheet(1).Row(i).Cell(28).Value).Trim() + ", "
+                            : "") +
+                              Convert.ToString(book.Worksheet(1).Row(i).Cell(29).Value).Trim() +
+                              (Convert.ToString(book.Worksheet(1).Row(i).Cell(30).Value).Trim() != ""
+                                ? ", " + Convert.ToString(book.Worksheet(1).Row(i).Cell(30).Value).Trim()
+                                : "");
+
+                        int nzp_kart = pg.InsertKart(database, nzp_gil, nzp_kvar.Split('|')[0],
                                                     Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim().ToUpper(),
                                                     Convert.ToString(book.Worksheet(1).Row(i).Cell(7).Value).Trim().ToUpper(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(8).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(9).Value).Trim(),
+                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(8).Value).Trim().ToUpper(),
+                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(14).Value).Trim(),
+                                                    "",
                                                     nzp_dok,
                                                     serij,
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(12).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(13).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(14).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(17).Value).Trim(),
                                                     Convert.ToString(book.Worksheet(1).Row(i).Cell(18).Value).Trim(),
+                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(17).Value).Trim(),
+                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(16).Value).Trim(),
+                                                    "П",
+                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(13).Value).Trim(),
+                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(12).Value).Trim(),
                                                     nzp_rod,
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(20).Value).Trim());
+                                                    "",
+                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(20).Value).Trim(),
+                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(21).Value).Trim(),
+                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(22).Value).Trim(),
+                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(23).Value).Trim(),
+                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(24).Value).Trim(),
+                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(25).Value).Trim(),
+                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(26).Value).Trim(),
+                                                    rem_ku);
                         pg.InsertGrgd(nzp_kart);
                     }
                 }
@@ -4513,101 +4586,104 @@ namespace ConsoleApplication1
                 string month = Console.ReadLine();
                 var book = new XLWorkbook();
                 string comment;
-                book = new XLWorkbook(@"C:\temp\Недопоставка по Кр.Коммунаров 17 (изолированные).xlsx");
-                comment = "заварен мусоропровод";
-                for (int i = 4; i <= 60; i++)
-                {
-                    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                    if (nzp_kvar == null)
-                    {
-                        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                    }
-                    else
-                    {
-                        int nzp_doc_base = pg.InsertDocBase(database, comment);
-                        pg.InsertPerekidka(database,
-                            Convert.ToInt32(nzp_kvar[0]),
-                            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1),
-                            nzp_doc_base,
-                            Convert.ToInt32(nzp_kvar[1]),
-                            17,
-                            101179,
-                            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
-                    }
-                }
-                book.Save();
-                book = new XLWorkbook(@"C:\temp\Недопоставка по Кр.Коммунаров 17 (коммуналка)-1.xlsx");
-                comment = "заварен мусоропровод";
-                for (int i = 4; i <= 56; i++)
-                {
-                    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                    if (nzp_kvar == null)
-                    {
-                        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                    }
-                    else
-                    {
-                        int nzp_doc_base = pg.InsertDocBase(database, comment);
-                        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
-                            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1), nzp_doc_base,
-                            Convert.ToInt32(nzp_kvar[1]),
-                            17, 101179,
-                            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
-                    }
-                }
-                book.Save();
-                book = new XLWorkbook(@"C:\temp\Недопоставка по Печерской 151.xlsx");
-                comment = "заварен мусоропровод";
-                for (int i = 4; i <= 204; i++)
-                {
-                    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                    if (nzp_kvar == null)
-                    {
-                        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                    }
-                    else
-                    {
-                        int nzp_doc_base = pg.InsertDocBase(database, comment);
-                        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
-                            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1), nzp_doc_base,
-                            Convert.ToInt32(nzp_kvar[1]),
-                            17, 101179,
-                            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
-                    }
-                }
-                book.Save();
-                book = new XLWorkbook(@"C:\temp\Недопоставка по Гастелло 47.3 (коммуналка).xlsx");
-                comment = "заварен мусоропровод";
-                for (int i = 4; i <= 58; i++)
-                {
-                    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                    if (nzp_kvar == null)
-                    {
-                        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                    }
-                    else
-                    {
-                        int nzp_doc_base = pg.InsertDocBase(database, comment);
-                        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
-                            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(8).Value) * (-1), nzp_doc_base,
-                            Convert.ToInt32(nzp_kvar[1]),
-                            17, 101179,
-                            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
-                    }
-                }
-                book.Save();
+                //book = new XLWorkbook(@"C:\temp\Недопоставка по Кр.Коммунаров 17 (изолированные).xlsx");
+                //comment = "заварен мусоропровод";
+                //for (int i = 4; i <= 60; i++)
+                //{
+                //    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                //    if (nzp_kvar == null)
+                //    {
+                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                //    }
+                //    else
+                //    {
+                //        int nzp_doc_base = pg.InsertDocBase(database, comment);
+                //        pg.InsertPerekidka(database,
+                //            Convert.ToInt32(nzp_kvar[0]),
+                //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1),
+                //            nzp_doc_base,
+                //            Convert.ToInt32(nzp_kvar[1]),
+                //            17,
+                //            101179,
+                //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
+                //    }
+                //}
+                //book.Save();
+                //book = new XLWorkbook(@"C:\temp\Недопоставка по Кр.Коммунаров 17 (коммуналка)-1.xlsx");
+                //comment = "заварен мусоропровод";
+                //for (int i = 4; i <= 56; i++)
+                //{
+                //    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                //    if (nzp_kvar == null)
+                //    {
+                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                //    }
+                //    else
+                //    {
+                //        int nzp_doc_base = pg.InsertDocBase(database, comment);
+                //        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
+                //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1), nzp_doc_base,
+                //            Convert.ToInt32(nzp_kvar[1]),
+                //            17, 101179,
+                //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
+                //    }
+                //}
+                //book.Save();
+                //book = new XLWorkbook(@"C:\temp\Недопоставка по Печерской 151.xlsx");
+                //comment = "заварен мусоропровод";
+                //for (int i = 4; i <= 204; i++)
+                //{
+                //    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                //    if (nzp_kvar == null)
+                //    {
+                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                //    }
+                //    else
+                //    {
+                //        int nzp_doc_base = pg.InsertDocBase(database, comment);
+                //        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
+                //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1), nzp_doc_base,
+                //            Convert.ToInt32(nzp_kvar[1]),
+                //            17, 101179,
+                //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
+                //    }
+                //}
+                //book.Save();
+                //book = new XLWorkbook(@"C:\temp\Недопоставка по Гастелло 47.3 (коммуналка).xlsx");
+                //comment = "заварен мусоропровод";
+                //for (int i = 4; i <= 58; i++)
+                //{
+                //    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                //    if (nzp_kvar == null)
+                //    {
+                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                //    }
+                //    else
+                //    {
+                //        int nzp_doc_base = pg.InsertDocBase(database, comment);
+                //        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
+                //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(8).Value) * (-1), nzp_doc_base,
+                //            Convert.ToInt32(nzp_kvar[1]),
+                //            17, 101179,
+                //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
+                //    }
+                //}
+                //book.Save();
                 book = new XLWorkbook(@"C:\temp\Недопоставка по Гастелло 47.3 (изолированные).xlsx");
                 comment = "заварен мусоропровод";
                 for (int i = 4; i <= 60; i++)
                 {
+                    if(i != 24 && i != 56)
+                        continue;
+             
                     List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
                                                     Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
                                                     Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
@@ -4626,29 +4702,29 @@ namespace ConsoleApplication1
                     }
                 }
                 book.Save();
-                book = new XLWorkbook(@"C:\temp\недопоставка Мальцева_10.xlsx");
-                comment = "лифт не работает";
-                for (int i = 3; i <= 61; i++)
-                {
-                    List<string> nzp_kvar = pg.SelectNzpKvar2(database,
-                        Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                        Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                        Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                    if (nzp_kvar == null)
-                    {
-                        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                    }
-                    else
-                    {
-                        int nzp_doc_base = pg.InsertDocBase(database, comment);
-                        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
-                            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(10).Value) * (-1), nzp_doc_base,
-                            Convert.ToInt32(nzp_kvar[1]),
-                            17, 101179,
-                            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
-                    }
-                }
-                book.Save();
+                //book = new XLWorkbook(@"C:\temp\недопоставка Мальцева_10.xlsx");
+                //comment = "лифт не работает";
+                //for (int i = 3; i <= 61; i++)
+                //{
+                //    List<string> nzp_kvar = pg.SelectNzpKvar2(database,
+                //        Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                //        Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                //        Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                //    if (nzp_kvar == null)
+                //    {
+                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                //    }
+                //    else
+                //    {
+                //        int nzp_doc_base = pg.InsertDocBase(database, comment);
+                //        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
+                //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(10).Value) * (-1), nzp_doc_base,
+                //            Convert.ToInt32(nzp_kvar[1]),
+                //            17, 101179,
+                //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
+                //    }
+                //}
+                //book.Save();
                 //book = new XLWorkbook(@"C:\temp\кр.ком 17 б.xlsx");
                 //comment = "Лифт не работал с 01.09-20.09.2015";
                 //for (int i = 4; i <= 114; i++)
@@ -8336,6 +8412,8 @@ namespace ConsoleApplication1
             #region 116
             else if (type == 116)
             {
+                Console.Write("Введите наименование БД:");
+                string database = Console.ReadLine();
                 var book = new XLWorkbook(@"C:\Temp\Реестр паспортиста по 7Просека 94.xlsx");
                 string address = "";
                 Int32 nzp_serv;
@@ -8364,7 +8442,7 @@ namespace ConsoleApplication1
                     }
                     else
                     {
-                        int nzp_gil = pg.InsertGil();
+                        int nzp_gil = pg.InsertGil(database);
                         int nzp_rod = 0;
                         #region nzp_rod
                         switch (Convert.ToString(book.Worksheet(1).Row(i).Cell(4).Value).Trim())
