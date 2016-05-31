@@ -19,60 +19,6 @@ namespace ConsoleApplication1
 
         public List<string> houses = new List<string>();
 
-        public string InsertPeople5(string gkh_code, Int32 flat, string total_area, string useful_area, string privatized, string residents_count, string fio)
-        {
-            connStr = "Server=85.140.61.250;Database=gkh_samara;User ID=bars;Password=md5SM3tv;CommandTimeout=180000;";
-            //string cmdText = "SELECT gro.id from GKH_REALITY_OBJECT gro inner join GKH_DICT_MUNICIPALITY gdm on GDM.ID = GRO.MUNICIPALITY_ID where GDM.NAME LIKE '%г. Самара, Красноглинский р-н' AND replace(lower(GRO.ADDRESS), ' ','') = replace(lower('" + gkh_code + "'), ' ','')";
-            string cmdText = "SELECT id from GKH_REALITY_OBJECT where gkh_code = '" + gkh_code + "'";
-            NpgsqlConnection conn = new NpgsqlConnection(connStr);
-            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
-            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
-            DataTable dt = new DataTable();
-            int id;
-            conn.Open();
-            da.Fill(dt);
-            id = Convert.ToInt32(dt.Rows[0][0]);
-            int priv = 30;
-            if (privatized == "да" || privatized == "Да")
-                priv = 10;
-            else if (privatized == "Не задано" || privatized == "не задано")
-                priv = 30;
-            else
-                priv = 20;
-            if (string.IsNullOrEmpty(total_area) || total_area == " ")
-                total_area = "0";
-            if (string.IsNullOrEmpty(useful_area) || useful_area == " ")
-                useful_area = "0";
-            if (string.IsNullOrEmpty(residents_count) || residents_count == " ")
-                residents_count = "0";
-
-            if (!houses.Contains(id.ToString()))
-            {
-                houses.Add(id.ToString());
-                string cmdText2 = "DELETE FROM gkh_obj_apartment_info where reality_object_id = " + id;
-                NpgsqlCommand cmd2 = new NpgsqlCommand(cmdText2, conn);
-                cmd2.ExecuteNonQuery();
-            }
-
-            string cmdText1 = "INSERT INTO gkh_obj_apartment_info (object_version, object_create_date, object_edit_date, num_apartment, area_total, count_people, privatized," +
-                    "reality_object_id, fio_owner, area_living) VALUES(0, CURRENT_DATE, CURRENT_DATE, '" + flat + "'," + total_area.Replace(',', '.')
-                    + "," + residents_count + "," + priv + "," + id + ",'" + fio + "', " + useful_area.Replace(',', '.') + ")";
-            NpgsqlCommand cmd1 = new NpgsqlCommand(cmdText1, conn);
-            try
-            {
-                cmd1.ExecuteNonQuery();
-                return "ЗАГРУЖЕНО";
-            }
-            catch (Exception e)
-            {
-                string err = gkh_code + "||" + flat + "||" + e.Message;
-                return err;
-            }
-            finally
-            { conn.Close(); }
-
-        }
-
         public string SelectPkod(string address, string fio)
         {
             string connStr = "Server=192.168.1.25;Database=billAuk;User ID=postgres;Password=Admin;CommandTimeout=180000;";
@@ -1408,92 +1354,6 @@ where upper(ul.ulicareg || ' ' || ul.ulica || '  д.' || d.ndom) = upper('" + ad
             }
         }
 
-        public string SelectNzpKvar(string database, string ulica, string ndom, string nkvar)
-        {
-            string connStr = "Server=192.168.1.25;Database="+ database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
-            string cmdText = "SELECT nzp_kvar FROM bill01_data.kvar k " +
-                             " INNER JOIN bill01_data.dom d on d.nzp_dom = k.nzp_dom " +
-                             " INNER JOIN bill01_data.s_ulica ul on ul.nzp_ul = d.nzp_ul " +
-                             " WHERE ul.ulica = '"+ ulica + "' and ndom = '"+ ndom + "' and nkvar = '"+ nkvar + "'";
-            NpgsqlConnection conn = new NpgsqlConnection(connStr);
-            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
-            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
-            DataTable dt = new DataTable();
-            try
-            {
-                conn.Open();
-                da.Fill(dt);
-                if (dt.Rows.Count != 1)
-                {
-                    if (dt.Rows.Count == 0)
-                        return "0" + "|Ненайдено ЛС";
-                    else
-                        return "-1" + "|Найдено больше 1-го ЛС";
-                }
-                else
-                {
-                    return dt.Rows[0][0].ToString() + "|Найдено";
-                }
-            }
-
-            catch (Exception e)
-            {
-                return "0" + "|" + e.ToString();
-            }
-            finally
-            {
-                conn.Close();
-            }
-        }
-
-        public void ClearKart(string database, string nzp_kvar)
-        {
-            string connStr = "Server=192.168.1.25;Database=" + database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
-            string cmdText = "DELETE FROM bill01_data.gilec where nzp_gil in (SELECT nzp_gil FROM bill01_data.kart where nzp_kvar = "+ nzp_kvar + ")";
-            NpgsqlConnection conn = new NpgsqlConnection(connStr);
-            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
-            conn.Open();
-            //Получаем nzp_prm добавленной нами записи
-            cmd.ExecuteNonQuery();
-            
-            cmdText = "DELETE FROM bill01_data.kart where nzp_kvar = " + nzp_kvar;
-            cmd = new NpgsqlCommand(cmdText, conn);
-            cmd.ExecuteNonQuery();
-            conn.Close();
-        }
-
-        public string SelectNzpKvarByKvarDom(string database, string nkvar, int nzp_dom)
-        {
-            string connStr = "Server=192.168.1.25;Database=" + database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
-            string cmdText = "SELECT nzp_kvar FROM bill01_data.kvar k WHERE nkvar = '" + nkvar + "' AND nzp_dom = " + nzp_dom;
-            NpgsqlConnection conn = new NpgsqlConnection(connStr);
-            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
-            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
-            DataTable dt = new DataTable();
-            try
-            {
-                conn.Open();
-                da.Fill(dt);
-                if (dt.Rows.Count != 1)
-                {
-                    return "0" + "|Найдено больше или меньше 1-ой улицы";
-                }
-                else
-                {
-                    return dt.Rows[0][0].ToString() + "|Найдено";
-                }
-            }
-
-            catch (Exception e)
-            {
-                return "0" + "|" + e.ToString();
-            }
-            finally
-            {
-                conn.Close();
-            }
-        }
-
         public List<string> SelectNzpKvarByPkod10NzpDom(string database, string pkod10, int nzp_dom, string bank)
         {
             string connStr = "Server=192.168.1.25;Database=" + database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
@@ -1843,21 +1703,6 @@ having count(nzp_kvar)>1";
             }
         }
 
-       
-
-        public int InsertGil(string database)
-        {
-            string connStr = "Server=192.168.1.25;Database="+ database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
-            string cmdText = "INSERT INTO bill01_data.gilec(sogl) VALUES(0) returning nzp_gil";
-            NpgsqlConnection conn = new NpgsqlConnection(connStr);
-            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
-            conn.Open();
-            //Получаем nzp_prm добавленной нами записи
-            int nzp_gil = Convert.ToInt32(cmd.ExecuteScalar());
-            conn.Close();
-            return nzp_gil;
-        }
-
         public int InsertDocBase(string database, string comment)
         {
             string connStr = "Server=192.168.1.25;Database=" + database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
@@ -1870,90 +1715,6 @@ having count(nzp_kvar)>1";
             int nzp_doc_base = Convert.ToInt32(cmd.ExecuteScalar());
             conn.Close();
             return nzp_doc_base;
-        }
-
-        public int InsertKart(string database, int nzp_gil, string nzp_kvar, string fam, string ima, string otch, string dat_rog, string gender, int nzp_dok, string serij, string nomer, 
-            string vid_dat, string vid_mes, string tprp, string dat_sost, string dat_reg, int nzp_rod, string rodstvo,
-            string region_op, string okrug_op, string gorod_op, string npunkt_op, string region_ku, string okrug_ku, string gorod_ku, string rem_ku)
-        {
-            string connStr = "Server=192.168.1.25;Database="+ database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
-            if (tprp.Length != 1)
-            {
-                if (tprp.Length != 0)
-                    tprp = tprp.Substring(0, 1);
-                else
-                    tprp = "П";
-            }
-            int nzp_tkrt = dat_sost == "" ? 1 : 2;
-            if (dat_sost == "")
-                dat_sost = "01.01.0001";
-            if (vid_dat == "")
-                vid_dat = "01.01.0001";
-            if (region_op.Length > 30)
-                region_op = region_op.Substring(0, 30);
-            if (okrug_op.Length > 30)
-                okrug_op = okrug_op.Substring(0, 30);
-            if (gorod_op.Length > 30)
-                gorod_op = gorod_op.Substring(0, 30);
-            if (npunkt_op.Length > 30)
-                npunkt_op = npunkt_op.Substring(0, 30);
-            if (okrug_ku.Length > 30)
-                okrug_ku = okrug_ku.Substring(0, 30);
-            if (gorod_ku.Length > 30)
-                gorod_ku = gorod_ku.Substring(0, 30);
-            if (rem_ku.Length > 30)
-                rem_ku = rem_ku.Substring(0, 30);
-            if (region_ku.Length > 30)
-                region_ku = region_ku.Substring(0, 30);
-            if (nomer.Length > 7)
-                nomer = nomer.Substring(0, 7);
-
-            string cmdText = "INSERT INTO bill01_data.kart(nzp_gil, isactual, fam, ima, otch, dat_rog, gender, tprp, nzp_bank, nzp_user, nzp_tkrt, nzp_kvar, nzp_nat, nzp_rod, nzp_dok, serij, " +
-                             " nomer, vid_mes, vid_dat, dat_sost, dat_ofor, dat_izm, is_unl, cur_unl, rodstvo, region_op, okrug_op, gorod_op, npunkt_op, region_ku, okrug_ku, gorod_ku, rem_ku) " +
-                "VALUES("+nzp_gil+", 1, '"+fam+"', '"+ima+"', '"+otch+"', to_date('"+dat_rog+"', 'dd.mm.yyyy'), '"+gender+"', '"+tprp+"', 1, 1, "+ nzp_tkrt + ", "+nzp_kvar+", -1, "+nzp_rod
-                +", "+nzp_dok+", '"+serij+"', '"+nomer+"', '"+vid_mes+"', to_date('"+vid_dat+"', 'dd.mm.yyyy'),  to_date('"+ dat_sost + "', 'dd.mm.yyyy'),  to_date('"+dat_reg
-                +"', 'dd.mm.yyyy'), current_date, 1, 1, '"+rodstvo+"','"+ region_op + "', '"+ okrug_op + "', '"+ gorod_op + "', '"+ npunkt_op + "', '"+ region_ku + "', '" 
-                + okrug_ku + "', '"+ gorod_ku + "', '"+ rem_ku + "') returning nzp_kart";
-            NpgsqlConnection conn = new NpgsqlConnection(connStr);
-            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
-            conn.Open();
-            //Получаем nzp_prm добавленной нами записи
-            int nzp_kart = Convert.ToInt32(cmd.ExecuteScalar());
-            conn.Close();
-            return nzp_kart;
-        }
-
-        public int InsertKart(string database, int nzp_gil, string nzp_kvar, string fam, string ima, string otch, string dat_rog, string tprp, string dat_reg, int nzp_rod, string rodstvo)
-        {
-            string connStr = "Server=192.168.1.25;Database=" + database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
-            if (tprp.Length != 1)
-            {
-                if (tprp.Length != 0)
-                    tprp = tprp.Substring(0, 1);
-                else
-                    tprp = "п";
-            }
-            string cmdText = "";
-            if (dat_reg != "")
-            {
-                cmdText = "INSERT INTO bill01_data.kart(nzp_gil, isactual, fam, ima, otch, dat_rog, tprp, nzp_bank, nzp_user, nzp_tkrt, nzp_kvar, nzp_nat, nzp_rod, dat_sost, dat_ofor, dat_izm, is_unl, cur_unl, rodstvo) " +
-                      "VALUES(" + nzp_gil + ", 1, '" + fam + "', '" + ima + "', '" + otch + "', to_date('" + dat_rog + "', 'dd.mm.yyyy'), '" + tprp + "', 1, 1, 1, " + nzp_kvar + ", -1, " + nzp_rod
-                      + ", to_date('" + dat_reg + "', 'dd.mm.yyyy'),  to_date('" + dat_reg + "', 'dd.mm.yyyy'), current_date, 1, 1, '" + rodstvo + "') returning nzp_kart";
-            }
-            else
-            {
-                cmdText = "INSERT INTO bill01_data.kart(nzp_gil, isactual, fam, ima, otch, dat_rog, tprp, nzp_bank, nzp_user, nzp_tkrt, nzp_kvar, nzp_nat, nzp_rod, dat_izm, is_unl, cur_unl, rodstvo) " +
-                      "VALUES(" + nzp_gil + ", 1, '" + fam + "', '" + ima + "', '" + otch + "', to_date('" + dat_rog + "', 'dd.mm.yyyy'), '" + tprp + "', 1, 1, 1, " + nzp_kvar + ", -1, " + nzp_rod
-                      + ", current_date, 1, 1, '" + rodstvo + "') returning nzp_kart";
-            }
-           
-            NpgsqlConnection conn = new NpgsqlConnection(connStr);
-            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
-            conn.Open();
-            //Получаем nzp_prm добавленной нами записи
-            int nzp_kart = Convert.ToInt32(cmd.ExecuteScalar());
-            conn.Close();
-            return nzp_kart;
         }
 
         public void InsertPerekidka(string database, int nzp_kvar, decimal sum_rcl, int nzp_doc_base, int num_ls, int nzp_serv, int nzp_supp, string date_rcl, int month_, int year_)
@@ -2311,193 +2072,6 @@ having count(nzp_kvar)>1";
                     kvarParams.Add(dt.Rows[0][1].ToString());
                     return kvarParams;
                 }
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
-        public DataTable SelectSaldoForNCC(Int32 year, Int32 month, List<string> prefs)
-        {
-            string connStr = "Server=192.168.1.25;Database=billTlt;User ID=postgres;Password=Admin;CommandTimeout=180000;";
-            DataTable dataTable = new DataTable();
-            dataTable.Columns.Add("pkod");
-            dataTable.Columns.Add("qwerty");
-            dataTable.Columns.Add("sum_outsaldo");
-            DataRow row2;
-            NpgsqlConnection conn = new NpgsqlConnection(connStr);
-            foreach (string pref in prefs)
-            {
-                string cmdText = @"SELECT k.pkod, ul.ulicareg || ' ' || ul.ulica || ' д.' || d.ndom || ' кв ' || k.ikvar || ' к ' || CASE WHEN k.nkvar_n = '' 
-                                OR k.nkvar_n  is null THEN '-' ELSE k.nkvar_n END as qwerty, c.sum_outsaldo 
-                                FROM " + pref + @"_charge_" + (year - 2000).ToString("00") + @".charge_" +
-                                       (pref == "bill02" ? (month - 1).ToString("00") : month.ToString("00")) +
-                                @" c 
-                                INNER JOIN " + pref + @"_data.kvar k on k.nzp_kvar = c.nzp_kvar 
-                                INNER JOIN " + pref + @"_data.dom d on d.nzp_dom = k.nzp_dom
-                                INNER JOIN " + pref + @"_data.s_ulica ul on ul.nzp_ul = d.nzp_ul
-                                where nzp_serv = 1";
-                NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
-                NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-
-                try
-                {
-                    da.Fill(dt);
-                    for (int i = 0; i < dt.Rows.Count; i++)
-                    {
-                        row2 = dataTable.NewRow();
-                        row2["pkod"] = dt.Rows[i][0];
-                        row2["qwerty"] = dt.Rows[i][1];
-                        row2["sum_outsaldo"] = dt.Rows[i][2];
-                        dataTable.Rows.Add(row2);
-                    }
-                }
-                catch (Exception)
-                {
-
-                }
-            }
-            return dataTable;
-        }
-
-        public DataTable SelectSaldoForAvtovazbank(Int32 year, Int32 month, List<string> prefs)
-        {
-            string connStr = "Server=192.168.1.25;Database=billTlt;User ID=postgres;Password=Admin;CommandTimeout=180000;";
-            DataTable dataTable = new DataTable();
-            dataTable.Columns.Add("pkod");
-            dataTable.Columns.Add("qwerty");
-            dataTable.Columns.Add("sum_outsaldo");
-            dataTable.Columns.Add("fio");
-            dataTable.Columns.Add("rekvizit");
-            DataRow row2;
-            NpgsqlConnection conn = new NpgsqlConnection(connStr);
-            foreach (string pref in prefs)
-            {
-                string rekvizit = "";
-                switch (pref)
-                {
-                    case "bill01":
-                    {
-                        rekvizit = "ТСЖ-1;6321195867;";
-                        break;
-                    }
-                    case "bill02":
-                    {
-                        rekvizit = "ТЭВИС;6320000561;";
-                        break;
-                    }
-                }
-                string cmdText = @"SELECT k.pkod, ul.ulicareg || ' ' || ul.ulica || ' д.' || d.ndom || ' кв ' || k.ikvar || ' к ' || CASE WHEN k.nkvar_n = '' 
-                                OR k.nkvar_n  is null THEN '-' ELSE k.nkvar_n END as qwerty, sum_outsaldo, k.fio 
-                                FROM " + pref + @"_charge_" + (year - 2000).ToString("00") + @".charge_" +
-                                       (pref == "bill02" ? (month - 1).ToString("00") : month.ToString("00")) +
-                                 @" c 
-                                INNER JOIN " + pref + @"_data.kvar k on k.nzp_kvar = c.nzp_kvar 
-                                INNER JOIN " + pref + @"_data.dom d on d.nzp_dom = k.nzp_dom
-                                INNER JOIN " + pref + @"_data.s_ulica ul on ul.nzp_ul = d.nzp_ul
-                                where nzp_serv = 1";
-                NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
-                NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-
-                try
-                {
-                    da.Fill(dt);
-                    for (int i = 0; i < dt.Rows.Count; i++)
-                    {
-                        row2 = dataTable.NewRow();                     
-                        row2["pkod"] = dt.Rows[i][0];
-                        row2["qwerty"] = dt.Rows[i][1];
-                        row2["sum_outsaldo"] = dt.Rows[i][2];
-                        row2["fio"] = dt.Rows[i][3];
-                        row2["rekvizit"] = rekvizit;
-                        dataTable.Rows.Add(row2);
-                    }
-                }
-                catch (Exception)
-                {
-
-                }
-            }
-            return dataTable;
-        }
-
-        public DataTable SelectSaldoForAvtovazbank2(Int32 year, Int32 month, List<string> prefs)
-        {
-            string connStr = "Server=192.168.1.25;Database=billTlt;User ID=postgres;Password=Admin;CommandTimeout=180000;";
-            DataTable dataTable = new DataTable();
-            dataTable.Columns.Add("pkod");
-            dataTable.Columns.Add("qwerty");
-            dataTable.Columns.Add("sum_outsaldo");
-            dataTable.Columns.Add("fio");
-            DataRow row2;
-            NpgsqlConnection conn = new NpgsqlConnection(connStr);
-            foreach (string pref in prefs)
-            {
-                string cmdText = @"SELECT k.pkod, ul.ulicareg || ' ' || ul.ulica || ' д.' || d.ndom || ' кв ' || k.ikvar || ' к ' || CASE WHEN k.nkvar_n = '' 
-                                OR k.nkvar_n  is null THEN '-' ELSE k.nkvar_n END as qwerty, sum_outsaldo, k.fio 
-                                FROM " + pref + @"_charge_" + (year - 2000).ToString("00") + @".charge_" +
-                                       (pref == "bill02" ? (month - 1).ToString("00") : month.ToString("00")) + 
-                                       @" c 
-                                INNER JOIN " + pref + @"_data.kvar k on k.nzp_kvar = c.nzp_kvar 
-                                INNER JOIN " + pref + @"_data.dom d on d.nzp_dom = k.nzp_dom
-                                INNER JOIN " + pref + @"_data.s_ulica ul on ul.nzp_ul = d.nzp_ul
-                                where nzp_serv = 1";
-                NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
-                NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-
-                try
-                {
-                    da.Fill(dt);
-                    for (int i = 0; i < dt.Rows.Count; i++)
-                    {
-                        row2 = dataTable.NewRow();
-                        row2["pkod"] = dt.Rows[i][0];
-                        row2["qwerty"] = dt.Rows[i][1];
-                        row2["sum_outsaldo"] = dt.Rows[i][2];
-                        row2["fio"] = dt.Rows[i][3];
-                        dataTable.Rows.Add(row2);
-                    }
-                }
-                catch (Exception)
-                {
-
-                }
-            }
-            return dataTable;
-        }
-
-        public DataTable SelectSaldoForSberbank(string localhost, int month, int year, List<string> prefs)
-        {
-            string connStr = "Server=" + (localhost == "localhost" ? "localhost" : "192.168.1.25") + ";Database=billTlt;User ID=postgres;Password=Admin;CommandTimeout=180000;";
-            string monthTo = month.ToString("00") + "." + year.ToString("0000");
-            string cmdText = "";
-            foreach (string pref in prefs)
-            {
-                if (pref != "bill01")
-                    cmdText += " UNION ALL ";
-                cmdText += @"SELECT k.pkod, k.fio, 'г. Тольятти ' || ul.ulicareg || ' ' || ul.ulica || ' д. ' || d.idom || ' кв. ' || k.ikvar || ' к. ' || CASE WHEN k.nkvar_n = '' 
-                                OR k.nkvar_n  is null THEN '-' ELSE k.nkvar_n END as address, '" + monthTo + @"', sum_outsaldo 
-                                FROM " + pref + @"_charge_" + (year - 2000) + @".charge_" +
-                                       (pref == "bill02" ? (month - 1).ToString("00") : month.ToString("00")) +
-                                @" c 
-                                INNER JOIN " + pref + @"_data.kvar k on k.nzp_kvar = c.nzp_kvar 
-                                INNER JOIN " + pref + @"_data.dom d on d.nzp_dom = k.nzp_dom
-                                INNER JOIN " + pref + @"_data.s_ulica ul on ul.nzp_ul = d.nzp_ul
-                                where nzp_serv = 1";
-            }
-            List<string> kvarParams = new List<string>();
-            NpgsqlConnection conn = new NpgsqlConnection(connStr);
-            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
-            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
-            DataTable dt = new DataTable();
-            try
-            {
-                da.Fill(dt);
-                return dt;
             }
             catch (Exception)
             {
@@ -3064,18 +2638,6 @@ having count(nzp_kvar)>1";
             conn.Close();
         }
 
-        public void InsertGrgd(int nzpKart)
-        {
-            string connStr = "Server=192.168.1.25;Database=billAuk;User ID=postgres;Password=Admin;CommandTimeout=180000;";
-            string cmdText = "INSERT INTO bill01_data.grgd(nzp_kart, nzp_grgd) VALUES(" + nzpKart + ", 1) returning id";
-            NpgsqlConnection conn = new NpgsqlConnection(connStr);
-            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
-            conn.Open();
-            //Получаем nzp_prm добавленной нами записи
-            //int nzp_gil = Convert.ToInt32(cmd.ExecuteScalar());
-            conn.Close();
-        }
-
         public DataTable GetMinusPeni()
         {
             string localhost = "";
@@ -3399,6 +2961,80 @@ having count(nzp_kvar)>1";
             {
                 return null;
             }
+        }
+
+        public DataTable GetAllGkhCode()
+        {
+            connStr = "Server=85.140.61.250;Database=gkh_samara;User ID=bars;Password=md5SM3tv;CommandTimeout=180000;";
+            string cmdText = "SELECT gkh_code, count(*) from gkh_reality_object group by 1 having count(*) > 1 order by 2";
+            NpgsqlConnection conn = new NpgsqlConnection(connStr);
+            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
+            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            try
+            {
+                da.Fill(dt);
+                return dt;
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+        }
+
+        public DataTable GetHousesByGkhCode(string gkhCode)
+        {
+            connStr = "Server=85.140.61.250;Database=gkh_samara;User ID=bars;Password=md5SM3tv;CommandTimeout=180000;";
+            string cmdText = "";
+            if (gkhCode != "")
+                cmdText = "SELECT id, municipality_id FROM gkh_reality_object where gkh_code = '"+ gkhCode + "' order by 1";
+            else
+                cmdText = "SELECT id, municipality_id FROM gkh_reality_object where gkh_code is null order by 1";
+            NpgsqlConnection conn = new NpgsqlConnection(connStr);
+            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
+            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            try
+            {
+                da.Fill(dt);
+                return dt;
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+        }
+
+        public Int32 GetMaxGkhCodeByMunId(int munId, string munPart)
+        {
+            if (munId == 21681)
+                munId = 21699;
+            if (munId == 21702)
+                munId = 21695;
+            connStr = "Server=85.140.61.250;Database=gkh_samara;User ID=bars;Password=md5SM3tv;CommandTimeout=180000;";
+            //string cmdText = "SELECT max(coalesce(CASE WHEN gkh_code = '' THEN '0' ELSE gkh_code END, '0')::integer) from gkh_reality_object where municipality_id = " + munId + " and gkh_code LIKE '"+ munPart + "%'";
+            string cmdText = "SELECT max(coalesce(CASE WHEN gkh_code = '' THEN '0' ELSE gkh_code END, '0')::integer) from gkh_reality_object where municipality_id in (21702)";
+            NpgsqlConnection conn = new NpgsqlConnection(connStr);
+            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
+            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+
+            da.Fill(dt);
+            int maxGkhCode = Convert.ToInt32(dt.Rows[0][0].ToString());
+            maxGkhCode++;
+            return maxGkhCode;
+            
+        }
+
+        public void UpdateGkhCode(int id, int newGkhCode)
+        {
+            connStr = "Server=85.140.61.250;Database=gkh_samara;User ID=bars;Password=md5SM3tv;CommandTimeout=180000;";
+            string cmdText = "UPDATE gkh_reality_object SET gkh_code = '" + newGkhCode +"' where id = " + id;
+            NpgsqlConnection conn = new NpgsqlConnection(connStr);
+            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
+            conn.Open();
+            cmd.ExecuteNonQuery();
+            conn.Close();
         }
     }
 }

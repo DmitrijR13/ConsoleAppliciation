@@ -116,7 +116,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Database\BillBaseDb.cs" />
+    <Compile Include="Database\BillKartDb.cs" />
+    <Compile Include="Database\BillPackDb.cs" />
+    <Compile Include="Database\BillUploadDataDb.cs" />
+    <Compile Include="Database\EzhkhInsertDataDb.cs" />
+    <Compile Include="Database\GetRoIdentifier.cs" />
+    <Compile Include="Database\InsertPeopleDb.cs" />
     <Compile Include="Dbf.cs" />
+    <Compile Include="mainCode\BillKart.cs" />
+    <Compile Include="mainCode\BillPack.cs" />
+    <Compile Include="mainCode\BillUploadData.cs" />
+    <Compile Include="mainCode\Depstr.cs" />
+    <Compile Include="mainCode\ExcelOperation.cs" />
+    <Compile Include="mainCode\EzhkhInsertData.cs" />
+    <Compile Include="mainCode\InsertPeople.cs" />
     <Compile Include="Ora.cs" />
     <Compile Include="pg.cs" />
     <Compile Include="programm.cs" />
@@ -133,6 +147,7 @@
     <Content Include="zlib32.dll" />
     <Content Include="zlib64.dll" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

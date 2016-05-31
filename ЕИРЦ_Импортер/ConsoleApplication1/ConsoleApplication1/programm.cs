@@ -1,5 +1,7 @@
 ﻿using BytesRoad.Net.Ftp;
 using ClosedXML.Excel;
+using ConsoleApplication1.Database;
+using ConsoleApplication1.mainCode;
 using ConsoleApplication9;
 using System;
 using System.Collections.Generic;
@@ -72,6 +74,9 @@ namespace ConsoleApplication1
             Ora ora = new Ora();
             Dbf dbf = new Dbf();
             pg pg = new pg();
+            BillBaseDb billBaseDb = new BillBaseDb();
+            InsertPeople ipProg = new InsertPeople();
+            Depstr depstr = new Depstr();
             int type;
             Console.WriteLine("0 = Запись из эксельки: на вход только exhkh_code");
             Console.WriteLine("1 = Запись из эксельки:поставщик, житель, дом на основе ezhkh_code");
@@ -99,31 +104,11 @@ namespace ConsoleApplication1
             Console.Write("Введите тип операции:");
             type = Convert.ToInt32(Console.ReadLine());
 
-            #region 5
+            #region 5 Update MKD Area
             if (type == 5)
             {
-                string name = "normativ12";
-                string name2 = "normativ_1";
-                int rows = 1026;
-                int rows2 = 1026;
-                var wb = new XLWorkbook(@"C:\temp\" + name + ".xlsx");
-                var wb2 = new XLWorkbook(@"C:\temp\" + name2 + ".xlsx");
-                for (int i = 1; i <= rows; i++)
-                {
-                    for (int j = 2; j <= rows2; j++)
-                    {
-                        if (Convert.ToString(wb.Worksheet(1).Row(i).Cell(7).Value).Trim() == Convert.ToString(wb2.Worksheet(1).Row(j).Cell(1).Value).Trim())
-                            //&& Convert.ToString(wb.Worksheet(1).Row(i).Cell(4).Value).Trim() == Convert.ToString(wb2.Worksheet(1).Row(j).Cell(3).Value).Trim())
-                        {
-                            wb.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                            //wb.Worksheet(1).Row(i).Cell(7).Value = Convert.ToString(wb2.Worksheet(1).Row(j).Cell(2).Value).Trim();
-                            break;
-                        }
-                    }
-                }
-                wb.Save();
-                wb2.Save();
-
+                EzhkhInsertData data = new EzhkhInsertData();
+                data.UpdateAreaMkd();
             }
             #endregion
 
@@ -169,293 +154,21 @@ namespace ConsoleApplication1
             }
             #endregion
 
-            #region 600
-            else if (type == 600)
-            {
-                Dictionary<string, string> bases = new Dictionary<string, string>();
-                bases.Add("BAZ_ALT", "78");
-                Dictionary<string, int> kHouse = new Dictionary<string, int>();
-                var wb = new XLWorkbook();
-                var ws = wb.Worksheets.Add("1");
-                int row = 2;
-                foreach (KeyValuePair<string, string> db in bases)
-                {
-                    //int rows = 1;
-                    string name = db.Key;
-                    string dbPath = @"G:\work\base\Новая папка\Кировский\DEZ_VAS\g33";
-                    DataTable dtHouseTemp = dbf.SelectKart(dbPath);
-                    for (int i = 0; i < dtHouseTemp.Rows.Count; i++)
-                    {
-                        if (dtHouseTemp.Rows[i][3].ToString().Trim() == "517")
-                        {
-                            for (int j = 0; j < dtHouseTemp.Columns.Count; j++)
-                            {
-                                ws.Cell(row, j+1).Value = dtHouseTemp.Rows[i][j].ToString();
-                            }
-                            row++;
-                        }
-                    }
-                }
-                wb.SaveAs(@"C:\temp\bilHouseCOunt2.xlsx");
-            }
-            #endregion
-
-            #region 7
+            #region 7 Free
             else if (type == 7)
             {
-                Dictionary<string, string> bases = new Dictionary<string, string>();
-                bases.Add("BAZ_ALT", "78");
-                bases.Add("BAZ_AYK", "79");
-                bases.Add("BAZ_TREST", "82");
-                bases.Add("baz_gks", "131");
-                bases.Add("baz_rem", "130");
-                var wb2 = new XLWorkbook(@"C:\temp\bilHouseCOunt.xlsx");
-                List<string> dt = new List<string>();
-                for (int i = 2; i <= 102; i++)
-                {
-                    dt.Add(Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value).Trim());
-                }
-                wb2.Save();
-                List<string> kHouse = new List<string>();
-                List<string> vu = new List<string>() { "0201", "0202" };
-                var wb = new XLWorkbook();
-                foreach (KeyValuePair<string, string> db in bases)
-                {
-                    int rows = 1;
-                    string name = db.Key;
-                    var ws = wb.Worksheets.Add(name);
-                    string dbPath = @"C:\imp\" + name + @"\spr\";
-                    string kodYK = "1111";
-                    DataTable dtNormTemp = dbf.SelectNorm(dbPath);
-                    DataTable dtHouseTemp = dbf.SelectHouse2(dbPath);
-                    DataTable dtTarifTemp = dbf.SelectTarif(dbPath);
-                    DataTable dtNorm = new DataTable();
-                    DataTable dtHouse = new DataTable();
-                    DataTable dtTarif = new DataTable();
-                    dtNorm.Columns.Add("1");
-                    dtNorm.Columns.Add("2");
-                    dtNorm.Columns.Add("3");
-                    dtNorm.Columns.Add("4");
-                    dtHouse.Columns.Add("1");
-                    dtHouse.Columns.Add("2");
-                    dtHouse.Columns.Add("3");
-                    dtHouse.Columns.Add("4");
-                    dtHouse.Columns.Add("5");
-                    dtTarif.Columns.Add("1");
-                    dtTarif.Columns.Add("2");
-                    dtTarif.Columns.Add("3");
-                    DataRow row2;
-                    DataRow row3;
-                    DataRow row4;
-                    DataTable dtHouseAll = dbf.SelectHouse(dbPath);
-                    for (int i = 0; i < dtNormTemp.Rows.Count; i++)
-                    {
-                        if (vu.Contains(dtNormTemp.Rows[i][0].ToString()))
-                        {
-                            row2 = dtNorm.NewRow();
-                            row2["1"] = dtNormTemp.Rows[i][0].ToString();
-                            row2["2"] = dtNormTemp.Rows[i][1].ToString();
-                            row2["3"] = dtNormTemp.Rows[i][2].ToString();
-                            row2["4"] = dtNormTemp.Rows[i][3].ToString();
-                            dtNorm.Rows.Add(row2);
-                        }
-                    }
-                    for (int i = 0; i < dtHouseTemp.Rows.Count; i++)
-                    {
-                        if (vu.Contains(dtHouseTemp.Rows[i][1].ToString()))
-                        {
-                            row3 = dtHouse.NewRow();
-                            if (dtHouseTemp.Rows[i][0].ToString() == "480")
-                            {
-                                
-                            }
-                            row3["1"] = dtHouseTemp.Rows[i][0].ToString();
-                            row3["2"] = dtHouseTemp.Rows[i][1].ToString();
-                            row3["3"] = dtHouseTemp.Rows[i][2].ToString();
-                            row3["4"] = dtHouseTemp.Rows[i][3].ToString();
-                            row3["5"] = dtHouseTemp.Rows[i][4].ToString();
-                            dtHouse.Rows.Add(row3);
-                        }
-                    }
-                    for (int i = 0; i < dtTarifTemp.Rows.Count; i++)
-                    {
-                        if (vu.Contains(dtTarifTemp.Rows[i][0].ToString()))
-                        {
-                            row4 = dtTarif.NewRow();
-                            row4["1"] = dtTarifTemp.Rows[i][0].ToString();
-                            row4["2"] = dtTarifTemp.Rows[i][1].ToString();
-                            row4["3"] = dtTarifTemp.Rows[i][2].ToString();
-                            dtTarif.Rows.Add(row4);
-                        }
-                    }
-                    if (name == "baz_rem")
-                    {
-                        string str = "222";
-                        str = str.Substring(1);
-                    }
-                    for (int i = 0; i < dtHouse.Rows.Count; i++)
-                    {
-                        if (!kHouse.Contains(dtHouse.Rows[i][0].ToString() + "|" + name))
-                        {
-                            if (dtHouse.Rows[i][0].ToString() == "931")
-                            {
-                                string sre = "etertertre";
-                                sre.Substring(4);
-                            }
-                            if (dtHouse.Rows[i][2] != null && dtHouse.Rows[i][2].ToString() != "")
-                            {
-                                for (int j = 0; j < dtTarif.Rows.Count; j++)
-                                {
-                                    if (dtHouse.Rows[i][1].ToString() == dtTarif.Rows[j][0].ToString() && dtHouse.Rows[i][2].ToString() == dtTarif.Rows[j][1].ToString())
-                                    {
-                                        for (int k = 0; k < dtNorm.Rows.Count; k++)
-                                        {
-                                            if (dtNorm.Rows[k][0].ToString() == dtTarif.Rows[j][0].ToString() && dtNorm.Rows[k][2].ToString() == dtTarif.Rows[j][2].ToString())
-                                            {
-                                                ws.Cell(rows, 1).Value = dtHouse.Rows[i][0].ToString();
-                                                string str = "";
-                                                str = Convert2(dtNorm.Rows[k][1].ToString(), Encoding.GetEncoding(1251), Encoding.Default);
-                                                ws.Cell(rows, 2).Value = str;
-                                                //ws.Cell(i + 1, 2).Value = dtNormTemp.Rows[i][1].ToString();
-                                                ws.Cell(rows, 3).Value = dtNorm.Rows[k][3].ToString();
-                                                kHouse.Add(dtHouse.Rows[i][0].ToString() + "|" + name);
-                                               
-                                                for (int r = 0; r < dtHouseAll.Rows.Count; r++)
-                                                {
-                                                    if (dtHouseAll.Rows[r][0].ToString() == dtHouse.Rows[i][0].ToString())
-                                                    {
-                                                        ws.Cell(rows, 4).Value = dtHouseAll.Rows[r][1].ToString();
-                                                        ws.Cell(rows, 5).Value = dtHouseAll.Rows[r][2].ToString();
-                                                        ws.Cell(rows, 6).Value = dtHouseAll.Rows[r][3].ToString();
-                                                        break;
-                                                    }
-                                                }
-                                                rows++;
-                                                break;
-                                            }
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                            else if (dtHouse.Rows[i][3] != null && dtHouse.Rows[i][3].ToString() != "")
-                            {
-                                for (int j = 0; j < dtTarif.Rows.Count; j++)
-                                {
-                                    if (dtHouse.Rows[i][1].ToString() == dtTarif.Rows[j][0].ToString() && dtHouse.Rows[i][3].ToString() == dtTarif.Rows[j][1].ToString())
-                                    {
-                                        for (int k = 0; k < dtNorm.Rows.Count; k++)
-                                        {
-                                            if (dtNorm.Rows[k][0].ToString() == dtTarif.Rows[j][0].ToString() && dtNorm.Rows[k][2].ToString() == dtTarif.Rows[j][2].ToString())
-                                            {
-                                                ws.Cell(rows, 1).Value = dtHouse.Rows[i][0].ToString();
-                                                string str = "";
-                                                str = Convert2(dtNorm.Rows[k][1].ToString(), Encoding.GetEncoding(1251), Encoding.Default);
-                                                ws.Cell(rows, 2).Value = str;
-                                                //ws.Cell(i + 1, 2).Value = dtNormTemp.Rows[i][1].ToString();
-                                                ws.Cell(rows, 3).Value = dtNorm.Rows[k][3].ToString();
-                                                kHouse.Add(dtHouse.Rows[i][0].ToString() + "|" + name);
-                                                if (dtHouse.Rows[i][0].ToString() == "931")
-                                                {
-                                                    string sre = "etertertre";
-                                                    sre.Substring(4);
-                                                }
-                                                
-                                                for (int r = 0; r < dtHouseAll.Rows.Count; r++)
-                                                {
-                                                    if (dtHouseAll.Rows[r][0].ToString() == dtHouse.Rows[i][0].ToString())
-                                                    {
-                                                        ws.Cell(rows, 4).Value = dtHouseAll.Rows[r][1].ToString();
-                                                        ws.Cell(rows, 5).Value = dtHouseAll.Rows[r][2].ToString();
-                                                        ws.Cell(rows, 6).Value = dtHouseAll.Rows[r][3].ToString();
-                                                        break;
-                                                    }
-                                                }
-                                                rows++;
-                                                break;
-                                            }
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                            else if (dtHouse.Rows[i][4] != null && dtHouse.Rows[i][4].ToString() != "")
-                            {
-                                for (int j = 0; j < dtTarif.Rows.Count; j++)
-                                {
-                                    if (dtHouse.Rows[i][1].ToString() == dtTarif.Rows[j][0].ToString() && dtHouse.Rows[i][4].ToString() == dtTarif.Rows[j][1].ToString())
-                                    {
-                                        for (int k = 0; k < dtNorm.Rows.Count; k++)
-                                        {
-                                            if (dtNorm.Rows[k][0].ToString() == dtTarif.Rows[j][0].ToString() && dtNorm.Rows[k][2].ToString() == dtTarif.Rows[j][2].ToString())
-                                            {
-                                                ws.Cell(rows, 1).Value = dtHouse.Rows[i][0].ToString();
-                                                string str = "";
-                                                str = Convert2(dtNorm.Rows[k][1].ToString(), Encoding.GetEncoding(1251), Encoding.Default);
-                                                ws.Cell(rows, 2).Value = str;
-                                                //ws.Cell(i + 1, 2).Value = dtNormTemp.Rows[i][1].ToString();
-                                                ws.Cell(rows, 3).Value = dtNorm.Rows[k][3].ToString();
-                                                kHouse.Add(dtHouse.Rows[i][0].ToString() + "|" + name);
-                                                if (dtHouse.Rows[i][0].ToString() == "931")
-                                                {
-                                                    string sre = "etertertre";
-                                                    sre.Substring(4);
-                                                }
-                                                for (int r = 0; r < dtHouseAll.Rows.Count; r++)
-                                                {
-                                                    if (dtHouseAll.Rows[r][0].ToString() == dtHouse.Rows[i][0].ToString())
-                                                    {
-                                                        ws.Cell(rows, 4).Value = dtHouseAll.Rows[r][1].ToString();
-                                                        ws.Cell(rows, 5).Value = dtHouseAll.Rows[r][2].ToString();
-                                                        ws.Cell(rows, 6).Value = dtHouseAll.Rows[r][3].ToString();
-                                                        break;
-                                                    }
-                                                }
-                                                rows++;
-                                                break;
-                                            }
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                            else
-                            {
-
-                            }
-                        }
-                    }
-                }
-                wb.SaveAs(@"C:\temp\4\normativ.xlsx");
+                
             }
             #endregion
 
-            #region 8
+            #region 8 Free
             else if (type == 8)
             {
-                var wb2 = new XLWorkbook(@"C:\temp\normativTemp.xlsx");
-                List<string> dt = new List<string>();
-                int rows = 1;
-                string name = "BAZ_AYK";
-                string dbPath = @"C:\imp\" + name + @"\spr\";
-                DataTable dtStreet = dbf.SelectStreet(dbPath);
-                for (int i = 2; i <= 150; i++)
-                {
-                    for(int j =1; j<dtStreet.Rows.Count;j++)
-                    {
-                        if (wb2.Worksheet(1).Row(i).Cell(3).Value.ToString() == dtStreet.Rows[j][3].ToString())
-                        {
-                            wb2.Worksheet(1).Row(i).Cell(3).Value = dtStreet.Rows[j][1].ToString();
-                            break;
-                        }
-                    }
-                }
-                wb2.Save();
-              
+                
             }
             #endregion
 
-            #region 9
+            #region 9 Проверка BarCode
             else if (type == 9)
             {
                 string bar_code = "004019294045012061400004534931";
@@ -517,18 +230,6 @@ namespace ConsoleApplication1
                     }
                 }
                 Dictionary<string, string> files = new Dictionary<string, string>();
-                /*files.Add("Альт-разовые-ХВС", "6");
-                files.Add("Альт-разовые-водоотв", "7");
-                files.Add("АУК-разовые-водоотв", "7");
-                files.Add("ЖКС_ХВС_на_ГВС_Победы-8Г", "14");
-                files.Add("ЖКС_ГВС_совАрмии23", "9");
-                files.Add("ЖКС_ГВС_ЖЭУ35", "9");
-                files.Add("ЖКС_ГВС_Балаков4_карякина2", "9");
-                files.Add("ЖКС_ГВС_22Партс-10", "9");
-                files.Add("ЖКС_ГВС_1Безымян-7", "9");
-                files.Add("ЖКС_Водоотвед_совАрмии23", "7");
-                files.Add("ЖКС_водоотвед_ЖЭУ35", "7");
-                files.Add("ЖКС_Водоотвед_Балаков4_карякина2", "7");*/
                 files.Add("Копия ЖКС-разовые-ГВС", "7");
                 files.Add("Копия ЖКС-разовые-водоотв", "7");
 
@@ -638,2126 +339,223 @@ namespace ConsoleApplication1
             }
             #endregion
 
-            #region 13- Перерасчеты
+            #region 13 Free
             else if (type == 13)
             {
-                var wb2 = new XLWorkbook(@"C:\temp\2\unload_sam60.xlsx");
-                DataRow row2;
-                DataTable dt2 = new System.Data.DataTable();
-                dt2.Columns.Add("1");
-                dt2.Columns.Add("2");
-                dt2.Columns.Add("3");
-                Dictionary<string, string> convert = new Dictionary<string, string>();
-                for (int i = 2; i <= 100000; i++)
-                {
-                    if (Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value) != "")
-                    {
-                        row2 = dt2.NewRow();
-                        row2["1"] = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value);
-                        row2["2"] = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(5).Value).PadLeft(5, '0');
-                        row2["3"] = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(6).Value);
-                        dt2.Rows.Add(row2);
-                        convert.Add(row2["1"].ToString() + "|" + row2["2"].ToString() + "|" + Convert.ToString(wb2.Worksheet(1).Row(i).Cell(7).Value), row2["3"].ToString() + "|" + Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value));
-                    }
-                }
-                Dictionary<string, string> files = new Dictionary<string, string>();
-                /*files.Add("Альт-разовые-ХВС", "6");
-                files.Add("Альт-разовые-водоотв", "7");
-                files.Add("АУК-разовые-водоотв", "7");
-                files.Add("Копия ЖКС-разовые-водоотв", "7");
-                files.Add("ЖКС_ГВС_совАрмии23", "9");
-                files.Add("ЖКС_ГВС_ЖЭУ35", "9");
-                files.Add("ЖКС_ГВС_Балаков4_карякина2", "9");
-                files.Add("ЖКС_ГВС_22Партс-10", "9");
-                files.Add("ЖКС_ГВС_1Безымян-7", "9");
-                files.Add("ЖКС_Водоотвед_совАрмии23", "7");*/
-                files.Add("Копия ЖКС-разовые-ХВС-на ГВС_компонент на хол.воду", "14");
-                files.Add("Копия ЖКС-разовые-ХВС", "6");
-                files.Add("Копия ЖКС-разовые-ГВС", "9");
-                files.Add("Копия ЖКС-разовые-водоотв", "7");
-
-                Dictionary<string, string> sup = new Dictionary<string, string>();
-                sup.Add("ООО \"СКС\"", "612");
-                sup.Add("ОАО \"ПТС\"", "974");
-                sup.Add("ЗАО СамГЭС\"", "1039");
-                sup.Add("ЗАО \"СамГЭС\"", "1039");
-                sup.Add("ОАО \"Самараэнерго\"", "117");
-                sup.Add("ООО \"Сбыт-Энерго\"", "289");
-                sup.Add("ООО \"СВГК\"", "148");
-                sup.Add("ОАО \"ВТГК\"", "100");
-                sup.Add("ЗАО \"КОММУНЭНЕРГО\"", "98");
-                sup.Add("КЖКХ Советского р-на", "1042");
-                sup.Add("ООО \"Жилищно-коммунальная система\"", "1071");
-                string geu = "";
-                var wb3 = new XLWorkbook(@"C:\temp\5\Книга8.xlsx");
-                DataRow row3;
-                DataTable dt3 = new System.Data.DataTable();
-                dt3.Columns.Add("1");
-                dt3.Columns.Add("2");
-                dt3.Columns.Add("3");
-                dt3.Columns.Add("4");
-                for (int i = 2; i <= 2499; i++)
-                {
-                    row3 = dt3.NewRow();
-                    row3["1"] = Convert.ToString(wb3.Worksheet(1).Row(i).Cell(5).Value);
-                    row3["2"] = Convert.ToString(wb3.Worksheet(1).Row(i).Cell(4).Value);
-                    row3["3"] = Convert.ToString(wb3.Worksheet(1).Row(i).Cell(2).Value);
-                    row3["4"] = Convert.ToString(wb3.Worksheet(1).Row(i).Cell(8).Value);
-                    dt3.Rows.Add(row3);
-                }
-                foreach (KeyValuePair<string, string> fileName in files)
-                {
-                    var wb = new XLWorkbook(@"C:\temp\5\" + fileName.Key + ".xlsx");
-                    for (int i = 8; i <= 1000; i++)
-                    {
-                        for (int j = 0; j < dt3.Rows.Count; j++)
-                        {
-                            if (wb.Worksheet(1).Row(i).Cell(7).Value.ToString() == dt3.Rows[j][0].ToString()
-                                && wb.Worksheet(1).Row(i).Cell(6).Value.ToString() == dt3.Rows[j][1].ToString()
-                                && wb.Worksheet(1).Row(i).Cell(5).Value.ToString() == dt3.Rows[j][2].ToString()
-                                && (wb.Worksheet(1).Row(i).Cell(1).Value.ToString() == dt3.Rows[j][3].ToString()
-                                    || (Convert.ToDecimal(wb.Worksheet(1).Row(i).Cell(2).Value) * (-1)).ToString() == dt3.Rows[j][3].ToString()))
-                            {
-                                wb.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                                break;
-                            }
-                        }
-                        // проставляем коды в эксель
-                        /*
-                        if (wb.Worksheet(1).Row(i).Cell(3).Value.ToString() != "")
-                        {
-                            geu = wb.Worksheet(1).Row(i).Cell(3).Value.ToString();
-                        }
-                        if (wb.Worksheet(1).Row(i).Cell(3).Value.ToString() != "")
-                        {
-                            string strеееее = (Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(4).Value.ToString() + "|1";
-                            string row = "";
-                            //код ЛС из биллинга
-                            if (convert.ContainsKey((Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(4).Value.ToString() + "|1"))
-                            {
-                                if (convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(4).Value.ToString() + "|1"].Split('|')[1].Contains(wb.Worksheet(1).Row(i).Cell(8).Value.ToString().Trim()))
-                                {
-                                    wb.Worksheet(1).Row(i).Cell(13).Value = convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(4).Value.ToString() + "|1"].Split('|')[0];
-                                }
-                                else if (convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(4).Value.ToString() + "|0"].Split('|')[1].Contains(wb.Worksheet(1).Row(i).Cell(8).Value.ToString().Trim()))
-                                {
-                                    wb.Worksheet(1).Row(i).Cell(13).Value = convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(4).Value.ToString() + "|0"].Split('|')[0];
-                                }
-                                else if (convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(4).Value.ToString() + "|2"].Split('|')[1].Contains(wb.Worksheet(1).Row(i).Cell(8).Value.ToString().Trim()))
-                                {
-                                    wb.Worksheet(1).Row(i).Cell(13).Value = convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(4).Value.ToString() + "|2"].Split('|')[0];
-                                }
-                                else if (convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(4).Value.ToString() + "|3"].Split('|')[1].Contains(wb.Worksheet(1).Row(i).Cell(8).Value.ToString().Trim()))
-                                {
-                                    wb.Worksheet(1).Row(i).Cell(13).Value = convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(4).Value.ToString() + "|3"].Split('|')[0];
-                                }
-                                else
-                                {
-                                    wb.Worksheet(1).Row(i).Cell(13).Value = "!!!!!!~~~~";
-                                }
-                            }
-                            else
-                            {
-                                string str = (Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(4).Value.ToString() + "|0";
-                                wb.Worksheet(1).Row(i).Cell(13).Value = convert[(Convert.ToInt32(geu) + 800).ToString().Trim() + "|" + wb.Worksheet(1).Row(i).Cell(4).Value.ToString().Trim() + "|0"].Split('|')[0];
-                            }
-                            wb.Worksheet(1).Row(i).Cell(14).Value = fileName.Value;
-                            wb.Worksheet(1).Row(i).Cell(15).Value = sup[wb.Worksheet(1).Row(i).Cell(1).Value.ToString()];
-                        }*/
-                    }
-                    wb.Save();
-                }
+                
             }
             #endregion
 
-            #region 14- Перерасчеты
+            #region 14 Free
             else if (type == 14)
             {
-                var wb2 = new XLWorkbook(@"C:\temp\2\unload_sam60.xlsx");
-                DataRow row2;
-                DataTable dt2 = new System.Data.DataTable();
-                dt2.Columns.Add("1");
-                dt2.Columns.Add("2");
-                dt2.Columns.Add("3");
-                Dictionary<string, string> convert = new Dictionary<string, string>();
-                for (int i = 2; i <= 100000; i++)
-                {
-                    if (Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value) != "")
-                    {
-                        row2 = dt2.NewRow();
-                        row2["1"] = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value);
-                        row2["2"] = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(5).Value).PadLeft(5, '0');
-                        row2["3"] = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(6).Value);
-                        dt2.Rows.Add(row2);
-                        convert.Add(row2["1"].ToString() + "|" + row2["2"].ToString() + "|" + Convert.ToString(wb2.Worksheet(1).Row(i).Cell(7).Value), row2["3"].ToString() + "|" + Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value));
-                    }
-                }
-                Dictionary<string, string> files = new Dictionary<string, string>();
-                /*files.Add("Альт-разовые-ХВС", "6");
-                files.Add("Альт-разовые-водоотв", "7");
-                files.Add("АУК-разовые-водоотв", "7");
-                files.Add("ЖКС_ХВС_на_ГВС_Победы-8Г", "14");
-                files.Add("ЖКС_ГВС_совАрмии23", "9");
-                files.Add("ЖКС_ГВС_ЖЭУ35", "9");
-                files.Add("ЖКС_ГВС_Балаков4_карякина2", "9");
-                files.Add("ЖКС_ГВС_22Партс-10", "9");
-                files.Add("ЖКС_ГВС_1Безымян-7", "9");
-                files.Add("ЖКС_Водоотвед_совАрмии23", "7");
-                files.Add("ЖКС_водоотвед_ЖЭУ35", "7");
-                files.Add("ЖКС_Водоотвед_Балаков4_карякина2", "7");*/
-                files.Add("Копия ЖКС-разовые-ХВС", "7");
-                files.Add("Копия ЖКС-разовые-водоотв", "7");
-
-                Dictionary<string, string> sup = new Dictionary<string, string>();
-                sup.Add("ООО Самарские коммунальные системы", "612");
-                sup.Add("ОАО ПТС", "974");
-                sup.Add("ЗАО СамГЭС\"", "1039");
-                sup.Add("ЗАО \"СамГЭС\"", "1039");
-                sup.Add("ОАО \"Самараэнерго\"", "117");
-                sup.Add("ООО \"Сбыт-Энерго\"", "289");
-                sup.Add("ООО \"СВГК\"", "148");
-                sup.Add("ОАО \"ВТГК\"", "100");
-                sup.Add("ЗАО Коммунэнерго", "98");
-                sup.Add("КЖКХ Советского р-на", "1042");
-                sup.Add("ООО \"Жилищно-коммунальная система\"", "1071");
-                string geu = "";
-                StreamWriter sw = new StreamWriter(@"C:\temp\5\nedopost5_1Dop.txt", false);
-                foreach (KeyValuePair<string, string> fileName in files)
-                {
-                    var wb = new XLWorkbook(@"C:\temp\5\" + fileName.Key + ".xlsx");
-                    for (int i = 501; i <= 588; i++)
-                    {
-                        if (wb.Worksheet(1).Row(i).Cell(5).Value.ToString() != "")
-                        {
-                            string row = "";
-                            //код ЛС из биллинга
-                            row += wb.Worksheet(1).Row(i).Cell(5).Value.ToString().Trim() + "|";
-                            //код услуги
-                            row += wb.Worksheet(1).Row(i).Cell(6).Value.ToString().Trim() + "|";
-                            //код поставщика
-                            row += wb.Worksheet(1).Row(i).Cell(7).Value.ToString() + "|";
-                            //месяц
-                            row += "01.07.2014|";
-                            //сумма перекидки
-                            if (Convert.ToDecimal(wb.Worksheet(1).Row(i).Cell(1).Value) > 0)
-                            {
-                                row += Math.Round(Convert.ToDecimal(wb.Worksheet(1).Row(i).Cell(1).Value), 2) + "|";
-                            }
-                            else if (Convert.ToDecimal(wb.Worksheet(1).Row(i).Cell(2).Value) > 0)
-                            {
-                                row += Math.Round(Convert.ToDecimal(wb.Worksheet(1).Row(i).Cell(2).Value), 2) * (-1) + "|";
-                            }
-                            else
-                            {
-                                row += "0|";
-                            }
-                            //комментарий
-                            row += wb.Worksheet(1).Row(i).Cell(4).Value.ToString() + "|";
-                            sw.WriteLine(row);
-                        }
-                    }
-                }
-                sw.Close();
+                
             }
             #endregion
 
-            #region 11
+            #region 11 Free
             else if (type == 11)
             {
-                /*insert into 
-(no, nzp_conv_db, tabid, geu, kod, nzp, kodp, kodls_m, rc, nzp_was, is_open)
- values (1679563, 131, 3, '00', '969', 260681, '83', 0, 1, null, null);*/
-                StreamWriter sw1 = new StreamWriter(@"C:\temp\5\kodPTS.txt", false);
-                StreamWriter sw2 = new StreamWriter(@"C:\temp\5\kodVTGK.txt", false);
-                StreamWriter sw3 = new StreamWriter(@"C:\temp\5\kodKomun.txt", false);
-                StreamWriter sw4 = new StreamWriter(@"C:\temp\5\kodVolgo.txt", false);
-                var wb1 = new XLWorkbook(@"C:\temp\5\Копия жксэ.xlsx");
-                for (int i = 128; i <= 139; i++)
-                {
-                    if (wb1.Worksheet(1).Row(i).Cell(9).Value.ToString() == "ОАО ПТС")
-                        sw1.Write(wb1.Worksheet(1).Row(i).Cell(4).Value.ToString() + ",");
-                    else if (wb1.Worksheet(1).Row(i).Cell(9).Value.ToString() == "ООО Волгатеплоснаб")
-                        sw4.Write(wb1.Worksheet(1).Row(i).Cell(4).Value.ToString() + ",");
-                    else if (wb1.Worksheet(1).Row(i).Cell(9).Value.ToString() == "ЗАО Коммунэнерго")
-                        sw3.Write(wb1.Worksheet(1).Row(i).Cell(4).Value.ToString() + ",");
-                    else if (wb1.Worksheet(1).Row(i).Cell(9).Value.ToString() == "ОАО ВТГК")
-                        sw2.Write(wb1.Worksheet(1).Row(i).Cell(4).Value.ToString() + ",");
-                }
-               
-                sw1.Close();
-                sw2.Close();
-                sw3.Close();
+
             }
             #endregion
 
-            #region 15
+            #region 15 Free
             else if (type == 15)
             {
-                StreamWriter sw1 = new StreamWriter(@"C:\temp\5\ins2.txt", false);
-                var wb1 = new XLWorkbook(@"C:\temp\5\mop.xlsx");
-                for (int i = 2; i <= 65; i=i+2)
-                {
-                    if (wb1.Worksheet(1).Row(i).Cell(3).Value.ToString() == "11")
-                    {
-                        sw1.WriteLine("delete from  sam61_charge_14:charge_06 where nzp_charge = " + wb1.Worksheet(1).Row(i).Cell(1).Value.ToString() + " AND nzp_serv = 11;");
-                        sw1.WriteLine("update sam61_charge_14:charge_06 SET sum_outsaldo = " +
-                            (Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(4).Value.ToString()) + Convert.ToDecimal(wb1.Worksheet(1).Row(i + 1).Cell(4).Value.ToString())).ToString() + ", sum_pere = "+
-                            (Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(5).Value.ToString()) + Convert.ToDecimal(wb1.Worksheet(1).Row(i + 1).Cell(5).Value.ToString())).ToString() + ", sum_insaldo = " +
-                            (Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(6).Value.ToString()) + Convert.ToDecimal(wb1.Worksheet(1).Row(i + 1).Cell(6).Value.ToString())).ToString() + " where nzp_charge = " +
-                            wb1.Worksheet(1).Row(i + 1).Cell(1).Value.ToString() + " AND nzp_serv = 17;");
-                    }
-                    else
-                    {
-                        sw1.WriteLine("delete from  sam61_charge_14:charge_06 where nzp_charge = " + wb1.Worksheet(1).Row(i+1).Cell(1).Value.ToString() + " AND nzp_serv = 11;");
-                        sw1.WriteLine("update sam61_charge_14:charge_06 SET sum_outsaldo = " +
-                            (Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(4).Value.ToString()) + Convert.ToDecimal(wb1.Worksheet(1).Row(i + 1).Cell(4).Value.ToString())).ToString() + ", sum_pere = " +
-                            (Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(5).Value.ToString()) + Convert.ToDecimal(wb1.Worksheet(1).Row(i + 1).Cell(5).Value.ToString())).ToString() + ", sum_insaldo = " +
-                            (Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(6).Value.ToString()) + Convert.ToDecimal(wb1.Worksheet(1).Row(i + 1).Cell(6).Value.ToString())).ToString() + " where nzp_charge = " +
-                            wb1.Worksheet(1).Row(i).Cell(1).Value.ToString() + " AND nzp_serv = 17;");
-                    }
-                }
-
-                sw1.Close();
+                
             }
             #endregion
 
-            #region 16- Перерасчеты
+            #region 16 Free
             else if (type == 16)
             {
-                var wb2 = new XLWorkbook(@"C:\temp\2\unload_sam60.xlsx");
-                DataRow row2;
-                DataTable dt2 = new System.Data.DataTable();
-                dt2.Columns.Add("1");
-                dt2.Columns.Add("2");
-                dt2.Columns.Add("3");
-                Dictionary<string, string> convert = new Dictionary<string, string>();
-                for (int i = 2; i <= 100000; i++)
-                {
-                    if (Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value) != "")
-                    {
-                        row2 = dt2.NewRow();
-                        row2["1"] = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value);
-                        row2["2"] = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(5).Value).PadLeft(5, '0');
-                        row2["3"] = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(6).Value);
-                        dt2.Rows.Add(row2);
-                        convert.Add(row2["1"].ToString() + "|" + row2["2"].ToString() + "|" + Convert.ToString(wb2.Worksheet(1).Row(i).Cell(7).Value), row2["3"].ToString() + "|" + Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value));
-                    }
-                }
-                Dictionary<string, string> files = new Dictionary<string, string>();
-                /*files.Add("Альт-разовые-ХВС", "6");
-                files.Add("Альт-разовые-водоотв", "7");
-                files.Add("АУК-разовые-водоотв", "7");
-                files.Add("ЖКС_ХВС_на_ГВС_Победы-8Г", "14");
-                files.Add("ЖКС_ГВС_совАрмии23", "9");
-                files.Add("ЖКС_ГВС_ЖЭУ35", "9");
-                files.Add("ЖКС_ГВС_Балаков4_карякина2", "9");
-                files.Add("ЖКС_ГВС_22Партс-10", "9");
-                files.Add("ЖКС_ГВС_1Безымян-7", "9");
-                files.Add("ЖКС_Водоотвед_совАрмии23", "7");
-                files.Add("ЖКС_водоотвед_ЖЭУ35", "7");
-                files.Add("ЖКС_Водоотвед_Балаков4_карякина2", "7");*/
-                files.Add("_ОДН-ЖКС", "7");
-
-                Dictionary<string, string> sup = new Dictionary<string, string>();
-                sup.Add("ООО Самарские коммунальные системы", "612");
-                sup.Add("ОАО ПТС", "974");
-                sup.Add("ЗАО СамГЭС\"", "1039");
-                sup.Add("ЗАО \"СамГЭС\"", "1039");
-                sup.Add("ОАО \"Самараэнерго\"", "117");
-                sup.Add("ООО \"Сбыт-Энерго\"", "289");
-                sup.Add("ООО \"СВГК\"", "148");
-                sup.Add("ОАО \"ВТГК\"", "100");
-                sup.Add("ЗАО Коммунэнерго", "98");
-                sup.Add("КЖКХ Советского р-на", "1042");
-                sup.Add("ООО \"Жилищно-коммунальная система\"", "1071");
-                string geu = "";
-                foreach (KeyValuePair<string, string> fileName in files)
-                {
-                    var wb = new XLWorkbook(@"C:\temp\5\" + fileName.Key + ".xlsx");
-                    for (int i = 4; i <= 49771; i++)
-                    {
-                        if (wb.Worksheet(1).Row(i).Cell(1).Value.ToString() != "")
-                        {
-                            geu = wb.Worksheet(1).Row(i).Cell(1).Value.ToString();
-                        }
-                        if (wb.Worksheet(1).Row(i).Cell(3).Value.ToString() != "")
-                        {
-                            try
-                            {
-                                string strеееее = (Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(3).Value.ToString().Trim() + "|1";
-                                string row = "";
-                                //код ЛС из биллинга
-                                if (convert.ContainsKey((Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(3).Value.ToString().Split(' ')[0].Trim() + "|1"))
-                                {
-                                    if (convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(3).Value.ToString().Split(' ')[0].Trim() + "|1"].Split('|')[1].Contains(wb.Worksheet(1).Row(i).Cell(5).Value.ToString().Trim().Split(' ')[0].Trim()))
-                                    {
-                                        wb.Worksheet(1).Row(i).Cell(8).Value = convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(3).Value.ToString().Split(' ')[0].Trim() + "|1"].Split('|')[0];
-                                    }
-                                    else if (convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(3).Value.ToString().Split(' ')[0].Trim() + "|0"].Split('|')[1].Contains(wb.Worksheet(1).Row(i).Cell(5).Value.ToString().Trim().Split(' ')[0].Trim()))
-                                    {
-                                        wb.Worksheet(1).Row(i).Cell(8).Value = convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(3).Value.ToString().Split(' ')[0].Trim() + "|0"].Split('|')[0];
-                                    }
-                                    else if (convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(3).Value.ToString().Split(' ')[0].Trim() + "|2"].Split('|')[1].Contains(wb.Worksheet(1).Row(i).Cell(5).Value.ToString().Trim().Split(' ')[0].Trim()))
-                                    {
-                                        wb.Worksheet(1).Row(i).Cell(8).Value = convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(3).Value.ToString().Split(' ')[0].Trim() + "|2"].Split('|')[0];
-                                    }
-                                    else if (convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(3).Value.ToString().Split(' ')[0].Trim() + "|3"].Split('|')[1].Contains(wb.Worksheet(1).Row(i).Cell(5).Value.ToString().Trim().Split(' ')[0].Trim()))
-                                    {
-                                        wb.Worksheet(1).Row(i).Cell(8).Value = convert[(Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(3).Value.ToString().Split(' ')[0].Trim() + "|3"].Split('|')[0];
-                                    }
-                                    else
-                                    {
-                                        wb.Worksheet(1).Row(i).Cell(8).Value = "!!!!!!~~~~";
-                                        wb.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                                    }
-                                }
-                                else
-                                {
-                                    string str = (Convert.ToInt32(geu) + 800).ToString() + "|" + wb.Worksheet(1).Row(i).Cell(3).Value.ToString().Split(' ')[0].Trim() + "|0";
-                                    wb.Worksheet(1).Row(i).Cell(8).Value = convert[(Convert.ToInt32(geu) + 800).ToString().Trim() + "|" + wb.Worksheet(1).Row(i).Cell(3).Value.ToString().Trim().Split(' ')[0].Trim() + "|0"].Split('|')[0];
-                                }
-                            }
-                            catch
-                            {
-                                wb.Worksheet(1).Row(i).Cell(8).Value = "````~~~~~~~~~~~";
-                                wb.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                            }
-                            
-                        }
-                    }
-                    wb.Save();
-                }
+                
             }
             #endregion
 
-            #region 17
+            #region 17 Free
             else if (type == 17)
             {
-                StreamWriter sw1 = new StreamWriter(@"C:\temp\5\upload4.txt", false);
-                var wb1 = new XLWorkbook(@"C:\temp\5\_ОДН-ЖКС.xlsx");
-                for (int i = 5; i <= 60000; i++)
-                {
-                    if (wb1.Worksheet(1).Row(i).Cell(3).Value.ToString() != ""
-                        && (wb1.Worksheet(1).Row(i).Cell(6).Value != null || wb1.Worksheet(1).Row(i).Cell(7).Value != null)
-                        && ((wb1.Worksheet(1).Row(i).Cell(6).Value.ToString() != "" && wb1.Worksheet(1).Row(i).Cell(6).Value.ToString() != "0")
-                        || (wb1.Worksheet(1).Row(i).Cell(7).Value.ToString() != "" && wb1.Worksheet(1).Row(i).Cell(7).Value.ToString() != "0")))
-                    {
-                        string row = "";
-                        row += wb1.Worksheet(1).Row(i).Cell(8).Value.ToString() + "|";
-                        if (wb1.Worksheet(1).Row(i).Cell(6).Value.ToString() != "" && wb1.Worksheet(1).Row(i).Cell(6).Value.ToString() != "0")
-                            row += Math.Round(Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(6).Value.ToString()), 2) + "|";
-                        else
-                            row += "0|";
-                        if (wb1.Worksheet(1).Row(i).Cell(7).Value.ToString() != "" && wb1.Worksheet(1).Row(i).Cell(7).Value.ToString() != "0")
-                            row += Math.Round(Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(7).Value.ToString()), 2) + "|";
-                        else
-                            row += "0|";
-                        sw1.WriteLine(row);
-                    }
-                }
-                sw1.Close();
+               
             }
             #endregion
 
-            #region 20
+            #region 20 Free
             else if (type == 20)
             {
-                StreamWriter sw1 = new StreamWriter(@"C:\temp\5\upload5.txt", false);
-                var wb1 = new XLWorkbook(@"C:\temp\5\Копия ржу_сальдо ээ.xlsx");
-                for (int i = 3; i <= 181; i++)
-                {
-                    if (wb1.Worksheet(1).Row(i).Cell(1).Value.ToString() != ""
-                        && (wb1.Worksheet(1).Row(i).Cell(4).Value != null)
-                        && (wb1.Worksheet(1).Row(i).Cell(4).Value.ToString() != "0"))
-                    {
-                        string row = "";
-                        row += wb1.Worksheet(1).Row(i).Cell(6).Value.ToString() + "|";
-                        if (wb1.Worksheet(1).Row(i).Cell(4).Value.ToString() != "" && wb1.Worksheet(1).Row(i).Cell(4).Value.ToString() != "0")
-                            row += Math.Round(Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(4).Value.ToString()), 2) + "|0|";
-                        sw1.WriteLine(row);
-                    }
-                }
-                sw1.Close();
+               
             }
             #endregion
 
-            #region 18- Перерасчеты
+            #region 18 Free
             else if (type == 18)
             {
                 
-                Dictionary<string, string> files = new Dictionary<string, string>();
-                /*files.Add("Альт-разовые-ХВС", "6");
-                files.Add("Альт-разовые-водоотв", "7");
-                files.Add("АУК-разовые-водоотв", "7");
-                files.Add("ЖКС_ХВС_на_ГВС_Победы-8Г", "14");
-                files.Add("ЖКС_ГВС_совАрмии23", "9");
-                files.Add("ЖКС_ГВС_ЖЭУ35", "9");
-                files.Add("ЖКС_ГВС_Балаков4_карякина2", "9");
-                files.Add("ЖКС_ГВС_22Партс-10", "9");
-                files.Add("ЖКС_ГВС_1Безымян-7", "9");
-                files.Add("ЖКС_Водоотвед_совАрмии23", "7");*/
-                files.Add("_ОДН-АУК", "7");
-                files.Add("_ОДН-ПЖРТ", "7");
-                files.Add("Копия _ОДН-Альт-2", "7");
-                decimal sum1 = 0;
-                decimal sum2 = 0;
-
-                foreach (KeyValuePair<string, string> fileName in files)
-                {
-                    var wb = new XLWorkbook(@"C:\temp\5\" + fileName.Key + ".xlsx");
-                    for (int i = 4; i <= 49771; i++)
-                    {
-                        if (wb.Worksheet(1).Row(i).Cell(3).Value.ToString() != "")
-                        {
-                            if (wb.Worksheet(1).Row(i).Cell(6).Value.ToString() != "" && wb.Worksheet(1).Row(i).Cell(6).Value.ToString() != "0")
-                                sum1 += Math.Round(Convert.ToDecimal(wb.Worksheet(1).Row(i).Cell(6).Value.ToString()), 2);
-
-                            if (wb.Worksheet(1).Row(i).Cell(7).Value.ToString() != "" && wb.Worksheet(1).Row(i).Cell(7).Value.ToString() != "0")
-                                sum2 += Math.Round(Convert.ToDecimal(wb.Worksheet(1).Row(i).Cell(7).Value.ToString()), 2);
-                        }
-                    }
-                    wb.Save();
-                }
-                Console.WriteLine(sum1);
-                Console.WriteLine(sum2);
             }
             #endregion
 
-            #region 19- Перерасчеты
+            #region 19 Free
             else if (type == 19)
             {
-                var wb2 = new XLWorkbook(@"C:\temp\2\unload_sam60.xlsx");
-                DataRow row2;
-                DataTable dt2 = new System.Data.DataTable();
-                dt2.Columns.Add("1");
-                dt2.Columns.Add("2");
-                dt2.Columns.Add("3");
-                Dictionary<string, string> convert = new Dictionary<string, string>();
-                for (int i = 2; i <= 100000; i++)
-                {
-                    if (Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value) != "" && Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value) == "892")
-                    {
-                        row2 = dt2.NewRow();
-                        row2["1"] = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value);
-                        row2["2"] = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(5).Value).PadLeft(5, '0');
-                        row2["3"] = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(6).Value);
-                        dt2.Rows.Add(row2);
-                        convert.Add(row2["2"].ToString() + "|" + Convert.ToString(wb2.Worksheet(1).Row(i).Cell(7).Value), Convert.ToString(wb2.Worksheet(1).Row(i).Cell(6).Value));
-                    }
-                }
-                Dictionary<string, string> files = new Dictionary<string, string>();
-                /*files.Add("Альт-разовые-ХВС", "6");
-                files.Add("Альт-разовые-водоотв", "7");
-                files.Add("АУК-разовые-водоотв", "7");
-                files.Add("ЖКС_ХВС_на_ГВС_Победы-8Г", "14");
-                files.Add("ЖКС_ГВС_совАрмии23", "9");
-                files.Add("ЖКС_ГВС_ЖЭУ35", "9");
-                files.Add("ЖКС_ГВС_Балаков4_карякина2", "9");
-                files.Add("ЖКС_ГВС_22Партс-10", "9");
-                files.Add("ЖКС_ГВС_1Безымян-7", "9");
-                files.Add("ЖКС_Водоотвед_совАрмии23", "7");
-                files.Add("ЖКС_водоотвед_ЖЭУ35", "7");
-                files.Add("ЖКС_Водоотвед_Балаков4_карякина2", "7");*/
-                files.Add("Копия ржу_сальдо ээ", "7");
-
-                Dictionary<string, string> sup = new Dictionary<string, string>();
-                sup.Add("ООО Самарские коммунальные системы", "612");
-                sup.Add("ОАО ПТС", "974");
-                sup.Add("ЗАО СамГЭС\"", "1039");
-                sup.Add("ЗАО \"СамГЭС\"", "1039");
-                sup.Add("ОАО \"Самараэнерго\"", "117");
-                sup.Add("ООО \"Сбыт-Энерго\"", "289");
-                sup.Add("ООО \"СВГК\"", "148");
-                sup.Add("ОАО \"ВТГК\"", "100");
-                sup.Add("ЗАО Коммунэнерго", "98");
-                sup.Add("КЖКХ Советского р-на", "1042");
-                sup.Add("ООО \"Жилищно-коммунальная система\"", "1071");
-                string geu = "";
-                foreach (KeyValuePair<string, string> fileName in files)
-                {
-                    var wb = new XLWorkbook(@"C:\temp\5\" + fileName.Key + ".xlsx");
-                    for (int i = 3; i <= 181; i++)
-                    {
-                        if (wb.Worksheet(1).Row(i).Cell(1).Value.ToString() != "")
-                        {
-                            try
-                            {
-                                //string strеееее = wb.Worksheet(1).Row(i).Cell(1).Value.ToString().Trim() + "|0";
-                                string row = "";
-                                //код ЛС из биллинга
-                                if (convert.ContainsKey(wb.Worksheet(1).Row(i).Cell(1).Value.ToString().Split(' ')[0].Trim().PadLeft(5, '0') + "|1"))
-                                {
-                                        wb.Worksheet(1).Row(i).Cell(6).Value = "!!!!!!~~~~";
-                                        wb.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                                }
-                                else
-                                {
-                                    //string str = wb.Worksheet(1).Row(i).Cell(1).Value.ToString().Split(' ')[0].Trim() + "|0";
-                                    wb.Worksheet(1).Row(i).Cell(6).Value = convert[wb.Worksheet(1).Row(i).Cell(1).Value.ToString().Trim().Split(' ')[0].Trim().PadLeft(5, '0') + "|0"];
-                                }
-                            }
-                            catch
-                            {
-                                wb.Worksheet(1).Row(i).Cell(6).Value = "````~~~~~~~~~~~";
-                                wb.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                            }
-
-                        }
-                    }
-                    wb.Save();
-                }
+                
             }
             #endregion
 
-            #region 10
+            #region 10 Free
             else if (type == 10)
             {
-                Dictionary<string, string> bases = new Dictionary<string, string>();
-                bases.Add("BAZ_ALT", "78");
-                bases.Add("BAZ_AYK", "79");
-                bases.Add("BAZ_TREST", "82");
-                bases.Add("baz_gks", "131");
-                bases.Add("baz_rem", "130");
-                StreamWriter sw = new StreamWriter(@"C:\temp\1\Грузить.txt", false);
-                StreamWriter sw2 = new StreamWriter(@"C:\temp\1\Грузить_ЖЭУ_УД_.txt", false);
-                StreamWriter sw3 = new StreamWriter(@"C:\temp\1\Коды.txt", false);
-                foreach (KeyValuePair<string, string> db in bases)
-                {
-                    string name = db.Key;
-                    string dbPath = @"C:\imp\" + name + @"\spr\";
-                    string kodYK = "1111";
-                    DataTable dtKodIN = dbf.SelectKodIN(dbPath);
-                    DataTable dtHouse = dbf.SelectHouse(dbPath, "1");
-                    DataTable dtStreet = dbf.SelectStreet(dbPath, "1");
-                    Dictionary<string, decimal> dtArea = dbf.SelectArea(dbPath, "1");
-                    for (int i = 0; i < dtKodIN.Rows.Count; i++)
-                    {
-                        if (dtKodIN.Rows[i][2].ToString() == "0")
-                        {
-                            string rowWrite = "";
-                            string rowWrite2 = "";
-                            string rowWrite3 = "";
-
-                            for (int j = 0; j < dtHouse.Rows.Count; j++)
-                            {
-                                if (dtHouse.Rows[j][6].ToString() == dtKodIN.Rows[i][0].ToString())
-                                {
-                                    for (int k = 0; k < dtStreet.Rows.Count; k++)
-                                    {
-                                        if (dtStreet.Rows[k][1].ToString() == dtHouse.Rows[j][2].ToString())
-                                        {
-                                            rowWrite2 += db.Value + "|";
-                                            rowWrite2 += dtKodIN.Rows[i][0].ToString() + "|";
-                                            rowWrite2 += dtHouse.Rows[j][2].ToString() + "|";
-                                            //1
-                                            rowWrite += "3||";
-                                            //rowWrite2 += "3||";
-                                            //3
-                                            rowWrite += dtKodIN.Rows[i][0].ToString() + "|";
-                                            //rowWrite2 += dtKodIN.Rows[i][0].ToString() + "|";
-                                            //4
-                                            rowWrite += "г.о. Самара||";
-                                            //rowWrite2 += "г.о. Самара||";
-                                            //6
-                                            rowWrite += dtStreet.Rows[k][0].ToString() + "|";
-                                            //rowWrite2 += dtStreet.Rows[k][0].ToString() + "|";
-                                            //7
-                                            rowWrite += dtHouse.Rows[j][0].ToString().Replace('└', 'А').Replace('┬', 'В') + "||" + kodYK + "|";
-                                            //rowWrite2 += dtHouse.Rows[j][0].ToString() + "||" + kodYK + "|";
-                                            //10
-                                            rowWrite += dtKodIN.Rows[i][1].ToString() + "|";
-                                            //rowWrite2 += dtKodIN.Rows[i][1].ToString() + "|";
-                                            //11
-                                            rowWrite += dtHouse.Rows[j][3].ToString() + "|";
-                                            // rowWrite2 += dtHouse.Rows[j][3].ToString() + "|";
-                                            //12
-                                            if (dtHouse.Rows[j][1] == null || dtHouse.Rows[j][1].ToString() == "")
-                                            {
-                                                rowWrite += "01.01.1950" + "|";
-                                                //rowWrite2 += "01.01.1950" + "|";
-                                            }
-                                            else
-                                            {
-                                                rowWrite += "01.01." + dtHouse.Rows[j][1].ToString() + "|";
-                                                // rowWrite2 += "01.01." + dtHouse.Rows[j][1].ToString() + "|";
-                                            }
-                                            //13
-                                            rowWrite += dtArea[dtKodIN.Rows[i][0].ToString()].ToString() + "|||96||||0|";
-                                            //rowWrite2 += dtArea[dtKodIN.Rows[i][0].ToString()].ToString() + "|||96||||0|";
-                                            //temp
-                                            //rowWrite2 += dtHouse.Rows[j][4].ToString() + "|";
-                                            //rowWrite2 += dtHouse.Rows[j][5].ToString() + "|";
-
-                                            sw.WriteLine(rowWrite);
-                                            sw2.WriteLine(rowWrite2);
-                                            break;
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-
-
-                        }
-                    }
-                }
-                sw.Close();
-                sw2.Close();
+                
             }
             #endregion
 
-            #region 21
+            #region 21 Free
             else if (type == 21)
             {
-                Dictionary<string, string> bases = new Dictionary<string, string>();
-                bases.Add("BAZA", "78");
-                bases.Add("Baza_GKS", "79");
-                bases.Add("BAZA_PTS", "82");
-                List<string> res = new List<string>();
-                int countAll = 0;
-                foreach (KeyValuePair<string, string> db in bases)
-                {
-                    int count = 0;
-                    string name = db.Key;
-                    string dbPath = @"C:\server_sam\" + name + @"\spr\";
-                    DataTable dtHouse = dbf.SelectHouse(dbPath);
-                    for (int i = 0; i < dtHouse.Rows.Count; i++)
-                    {
-                        count++;
-                        countAll++;
-                    }
-                    res.Add(name + " =" + count);
-                }
-                res.Add("All" + " =" + countAll);
-                foreach (string str in res)
-                {
-                    Console.WriteLine(str);
-                }
+               
             }
             #endregion
 
-            #region 22
+            #region 22 Free
             else if (type == 22)
             {
-                Dictionary<string, string> bases = new Dictionary<string, string>();
-                
-                bases.Add(@"Baza_GKS\g41", "Baza_GKS");
-                bases.Add(@"Baza_GKS\g43", "Baza_GKS");
-                bases.Add(@"Baza_GKS\g46", "Baza_GKS");
-                bases.Add(@"BAZA_PTS\g01", "BAZA_PTS");
-                bases.Add(@"BAZA_PTS\g03", "BAZA_PTS");
-                bases.Add(@"BAZA_PTS\g06", "BAZA_PTS");
-                bases.Add(@"BAZA\g11", "BAZA");
-                bases.Add(@"BAZA\g33", "BAZA");
-                bases.Add(@"BAZA\g66", "BAZA");
-                List<string> res = new List<string>();
-                int countAll = 0;
-                decimal areaAll1 = 0;
-                decimal areaAll2 = 0;
-                int kolGAll1 = 0;
-                int kolGAll2 = 0;
-                string tmpName = "";
-                int count = 0;
-                decimal area1 = 0;
-                decimal area2 = 0;
-                int kolG1 = 0;
-                int kolG2 = 0;
-                bool first = true;
-                foreach (KeyValuePair<string, string> db in bases)
-                {
 
-                    string name = db.Key;
-                    string dbPath = @"C:\server_sam\" + name + @"\";
-                    if (db.Value != tmpName)
-                    {
-                        if (!first)
-                        {
-                            res.Add(tmpName + ". ЛС = " + count);
-                            res.Add(tmpName + ". ПЛошадь1 = " + area1);
-                            res.Add(tmpName + ". ПЛошадь2 = " + area2);
-                            res.Add(tmpName + ". Жильцы1 = " + kolG1);
-                            res.Add(tmpName + ". Жильцы2 = " + kolG2);
-                        }
-                        first = false;
-                        tmpName = db.Value;
-                        count = 0;
-                        area1 = 0;
-                        area2 = 0;
-                        kolG1 = 0;
-                        kolG2 = 0;
-                    }
-                    DataTable dtHouse = dbf.SelectLS(dbPath);
-                    for (int i = 0; i < dtHouse.Rows.Count; i++)
-                    {
-                        count++;
-                        area1 += Convert.ToDecimal(dtHouse.Rows[i][1].ToString());
-                        area2 += Convert.ToDecimal(dtHouse.Rows[i][2].ToString());
-                        if (dtHouse.Rows[i][3] != null && dtHouse.Rows[i][3].ToString() != "")
-                        {
-                            kolG1 += Convert.ToInt32(dtHouse.Rows[i][3].ToString());
-                            kolGAll1 += Convert.ToInt32(dtHouse.Rows[i][3].ToString());
-                        }
-                        if (dtHouse.Rows[i][4] != null && dtHouse.Rows[i][4].ToString() != "")
-                        {
-                            kolG2 += Convert.ToInt32(dtHouse.Rows[i][4].ToString());
-                            kolGAll2 += Convert.ToInt32(dtHouse.Rows[i][4].ToString());
-                        }
-
-                        countAll++;
-                        areaAll1 += Convert.ToDecimal(dtHouse.Rows[i][1].ToString());
-                        areaAll2 += Convert.ToDecimal(dtHouse.Rows[i][2].ToString());
-                    }
-                    
-                   
-                }
-                res.Add("BAZA. ЛС = " + count);
-                res.Add("BAZA. ПЛошадь1 = " + area1);
-                res.Add("BAZA. ПЛошадь2 = " + area2);
-                res.Add("BAZA. Жильцы1 = " + kolG1);
-                res.Add("BAZA. Жильцы2 = " + kolG2);
-                res.Add("All . ЛС" + " =" + countAll);
-                res.Add("All . ПЛошадь1" + " =" + areaAll1);
-                res.Add("All . ПЛошадь2" + " =" + areaAll2);
-                res.Add("All . Жильцы1" + " =" + kolGAll1);
-                res.Add("All . Жильцы2" + " =" + kolGAll1);
-                foreach (string str in res)
-                {
-                    Console.WriteLine(str);
-                }
             }
             #endregion
 
-            #region 23
+            #region 23 Free
             else if (type == 23)
             {
-                Dictionary<string, string> bases = new Dictionary<string, string>();
-                bases.Add(@"Baza\g11", "Baza");
-                bases.Add(@"Baza\g33", "Baza");
-                bases.Add(@"Baza\g66", "Baza");
-                var wb = new XLWorkbook(@"C:\temp\6\Книга1.xlsx");
-                DataTable dt = new DataTable();
-                dt.Columns.Add("1");
-                dt.Columns.Add("2");
-                dt.Columns.Add("3");
-                DataRow row2;
-                Dictionary<string, string> convert = new Dictionary<string, string>();
-                List<string> ls = new List<string>();
-                for(int i= 2;i<=9530;i++)
-                {
-                    row2 = dt.NewRow();
-                    row2["1"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(1).Value);
-                    row2["2"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(2).Value);
-                    row2["3"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(3).Value).PadLeft(5, '0');
-                    dt.Rows.Add(row2);
-                }
-                Dictionary<string, decimal> res = new Dictionary<string, decimal>();
-                foreach (KeyValuePair<string, string> db in bases)
-                {
-
-                    string name = db.Key;
-                    string dbPath = @"C:\server_sam\" + name + @"\";
-                    DataTable dtHouse = dbf.SelectKart(dbPath);
-                    for (int i = 0; i < dtHouse.Rows.Count; i++)
-                    {
-                        bool isFind = false;
-                        for (int j = 0; j < dt.Rows.Count; j++)
-                        {
-                            if (dt.Rows[j][0].ToString() == dtHouse.Rows[i][0].ToString() &&
-                                dt.Rows[j][2].ToString() == dtHouse.Rows[i][4].ToString())
-                            {
-                                isFind = true;
-                                break;
-                            }
-                            
-                        }
-                        if (!isFind)
-                            ls.Add(dtHouse.Rows[i][0].ToString() + "|" + dtHouse.Rows[i][4].ToString());
-                    }
-                }
-
-                foreach (string str in ls)
-                {
-                    Console.WriteLine(str);
-                }
-
-               /* var wb = new XLWorkbook();
-                var ws = wb.Worksheets.Add("1");
-                int row = 2;
-                res = SortMyDictionaryByKey(res);
-                foreach (KeyValuePair<string, decimal> val in res)
-                {
-                    ws.Cell(row, 1).Value = val.Key;
-                    ws.Cell(row, 2).Value = val.Value;
-                    row++;
-                }
-                wb.SaveAs(@"C:\temp\saldoServer.xlsx");*/
+               
             }
             #endregion
 
-            #region 24
+            #region 24 Free
             else if (type == 24)
             {
-                StreamWriter sw1 = new StreamWriter(@"C:\temp\6\upload61HVS.txt", false);
-                StreamWriter sw2 = new StreamWriter(@"C:\temp\6\upload61Vodootv.txt", false);
-                StreamWriter sw3 = new StreamWriter(@"C:\temp\6\upload60HVS.txt", false);
-                StreamWriter sw4 = new StreamWriter(@"C:\temp\6\upload60GVS.txt", false);
-                var wb1 = new XLWorkbook(@"C:\temp\6\_ОДН-АУК.xlsx");
-                for (int i = 5; i <= 2732; i++)
-                {
-                    if (wb1.Worksheet(1).Row(i).Cell(3).Value.ToString() != ""
-                        && (wb1.Worksheet(1).Row(i).Cell(6).Value != null || wb1.Worksheet(1).Row(i).Cell(5).Value != null)
-                        && ((wb1.Worksheet(1).Row(i).Cell(6).Value.ToString() != "" && wb1.Worksheet(1).Row(i).Cell(6).Value.ToString() != "0")
-                        || (wb1.Worksheet(1).Row(i).Cell(5).Value.ToString() != "" && wb1.Worksheet(1).Row(i).Cell(5).Value.ToString() != "0")))
-                    {
-                        string row = "";
-                        
-                        row += wb1.Worksheet(1).Row(i).Cell(9).Value.ToString() + "|";
-                        
-                        if (wb1.Worksheet(1).Row(i).Cell(6).Value.ToString() != "" && wb1.Worksheet(1).Row(i).Cell(6).Value.ToString() != "0")
-                            row += Math.Round(Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(6).Value.ToString()), 2) + "|";
-                        else
-                            row += "0|";
-                        if (wb1.Worksheet(1).Row(i).Cell(5).Value.ToString() != "" && wb1.Worksheet(1).Row(i).Cell(5).Value.ToString() != "0")
-                            row += Math.Round(Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(5).Value.ToString()), 2) + "|";
-                        else
-                            row += "0|";
-                        sw1.WriteLine(row);
-                    }
-                    if (wb1.Worksheet(1).Row(i).Cell(3).Value.ToString() != ""
-                       && (wb1.Worksheet(1).Row(i).Cell(7).Value != null || wb1.Worksheet(1).Row(i).Cell(8).Value != null)
-                       && ((wb1.Worksheet(1).Row(i).Cell(7).Value.ToString() != "" && wb1.Worksheet(1).Row(i).Cell(7).Value.ToString() != "0")
-                       || (wb1.Worksheet(1).Row(i).Cell(8).Value.ToString() != "" && wb1.Worksheet(1).Row(i).Cell(8).Value.ToString() != "0")))
-                    {
-                        string row2 = "";
-                        row2 += wb1.Worksheet(1).Row(i).Cell(9).Value.ToString() + "|";
-                        if (wb1.Worksheet(1).Row(i).Cell(7).Value.ToString() != "" && wb1.Worksheet(1).Row(i).Cell(7).Value.ToString() != "0")
-                            row2 += Math.Round(Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(7).Value.ToString()), 2) + "|";
-                        else
-                            row2 += "0|";
-                        if (wb1.Worksheet(1).Row(i).Cell(8).Value.ToString() != "" && wb1.Worksheet(1).Row(i).Cell(8).Value.ToString() != "0")
-                            row2 += Math.Round(Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(8).Value.ToString()), 2) + "|";
-                        else
-                            row2 += "0|";
-                        
-                        sw2.WriteLine(row2);
-                    }
-                }
-                var wb2 = new XLWorkbook(@"C:\temp\6\_ОДН-ПЖРТ.xlsx");
-                for (int i = 5; i <= 1956; i++)
-                {
-                    if (wb2.Worksheet(1).Row(i).Cell(3).Value.ToString() != ""
-                       && (wb2.Worksheet(1).Row(i).Cell(6).Value != null || wb2.Worksheet(1).Row(i).Cell(5).Value != null)
-                       && ((wb2.Worksheet(1).Row(i).Cell(6).Value.ToString() != "" && wb2.Worksheet(1).Row(i).Cell(6).Value.ToString() != "0")
-                       || (wb2.Worksheet(1).Row(i).Cell(5).Value.ToString() != "" && wb2.Worksheet(1).Row(i).Cell(5).Value.ToString() != "0")))
-                    {
-                        string row = "";
-                        row += wb2.Worksheet(1).Row(i).Cell(7).Value.ToString() + "|";
-                        if (wb2.Worksheet(1).Row(i).Cell(6).Value.ToString() != "" && wb2.Worksheet(1).Row(i).Cell(6).Value.ToString() != "0")
-                            row += Math.Round(Convert.ToDecimal(wb2.Worksheet(1).Row(i).Cell(6).Value.ToString()), 2) + "|";
-                        else
-                            row += "0|";
-                        if (wb2.Worksheet(1).Row(i).Cell(5).Value.ToString() != "" && wb2.Worksheet(1).Row(i).Cell(5).Value.ToString() != "0")
-                            row += Math.Round(Convert.ToDecimal(wb2.Worksheet(1).Row(i).Cell(5).Value.ToString()), 2) + "|";
-                        else
-                            row += "0|";
-                        sw1.WriteLine(row);
-                    }
-                }
-                var wb3 = new XLWorkbook(@"C:\temp\6\_ОДН-ЖКС.xlsx");
-                for (int i = 5; i <= 49770; i++)
-                {
-                    if (wb3.Worksheet(1).Row(i).Cell(3).Value.ToString() != ""
-                        && (wb3.Worksheet(1).Row(i).Cell(6).Value != null || wb3.Worksheet(1).Row(i).Cell(5).Value != null)
-                        && ((wb3.Worksheet(1).Row(i).Cell(6).Value.ToString() != "" && wb3.Worksheet(1).Row(i).Cell(6).Value.ToString() != "0")
-                        || (wb3.Worksheet(1).Row(i).Cell(5).Value.ToString() != "" && wb3.Worksheet(1).Row(i).Cell(5).Value.ToString() != "0")))
-                    {
-                        string row = "";
-                        
-                        row += wb3.Worksheet(1).Row(i).Cell(9).Value.ToString() + "|";
-                        
-                        if (wb3.Worksheet(1).Row(i).Cell(5).Value.ToString() != "" && wb3.Worksheet(1).Row(i).Cell(5).Value.ToString() != "0")
-                            row += Math.Round(Convert.ToDecimal(wb3.Worksheet(1).Row(i).Cell(5).Value.ToString()), 2) + "|";
-                        else
-                            row += "0|";
-                        if (wb3.Worksheet(1).Row(i).Cell(6).Value.ToString() != "" && wb3.Worksheet(1).Row(i).Cell(6).Value.ToString() != "0")
-                            row += Math.Round(Convert.ToDecimal(wb3.Worksheet(1).Row(i).Cell(6).Value.ToString()), 2) + "|";
-                        else
-                            row += "0|";
-                        sw3.WriteLine(row);
-                    }
-
-
-                    if (wb3.Worksheet(1).Row(i).Cell(3).Value.ToString() != ""
-                        && (wb3.Worksheet(1).Row(i).Cell(8).Value != null || wb3.Worksheet(1).Row(i).Cell(7).Value != null)
-                        && ((wb3.Worksheet(1).Row(i).Cell(8).Value.ToString() != "" && wb3.Worksheet(1).Row(i).Cell(8).Value.ToString() != "0")
-                        || (wb3.Worksheet(1).Row(i).Cell(7).Value.ToString() != "" && wb3.Worksheet(1).Row(i).Cell(7).Value.ToString() != "0")))
-                    {
-                        string row2 = "";
-                        row2 += wb3.Worksheet(1).Row(i).Cell(9).Value.ToString() + "|";
-                        if (wb3.Worksheet(1).Row(i).Cell(7).Value.ToString() != "" && wb3.Worksheet(1).Row(i).Cell(7).Value.ToString() != "0")
-                            row2 += Math.Round(Convert.ToDecimal(wb3.Worksheet(1).Row(i).Cell(7).Value.ToString()), 2) + "|";
-                        else
-                            row2 += "0|";
-                        if (wb3.Worksheet(1).Row(i).Cell(8).Value.ToString() != "" && wb3.Worksheet(1).Row(i).Cell(8).Value.ToString() != "0")
-                            row2 += Math.Round(Convert.ToDecimal(wb3.Worksheet(1).Row(i).Cell(8).Value.ToString()), 2) + "|";
-                        else
-                            row2 += "0|";
-                        
-                        sw4.WriteLine(row2);
-                    }
-                }
-
-
-                sw1.Close();
-                sw2.Close();
-                sw3.Close();
-                sw4.Close();
+               
             }
             #endregion
 
-            #region 25
+            #region 25 Free
             else if (type == 25)
             {
-                Dictionary<string, string> bases = new Dictionary<string, string>();
-                bases.Add(@"g34", "Baza");
-                bases.Add(@"g35", "Baza");
-                bases.Add(@"g36", "Baza");
-                bases.Add(@"g37", "Baza");
-                bases.Add(@"g38", "Baza");
-                bases.Add(@"g39", "Baza");
-                bases.Add(@"g42", "Baza");
-                bases.Add(@"g43", "Baza");
-                bases.Add(@"g46", "Baza");
-                bases.Add(@"g50", "Baza");
-                bases.Add(@"g59", "Baza");
-                bases.Add(@"g66", "Baza");
-                bases.Add(@"g67", "Baza");
-                bases.Add(@"g68", "Baza");
-                bases.Add(@"g69", "Baza");
-                bases.Add(@"g72", "Baza");
-                bases.Add(@"g73", "Baza");
-                bases.Add(@"g74", "Baza");
-                decimal sum = 0;
-                foreach (KeyValuePair<string, string> db in bases)
-                {
-                    string name = db.Key;
-                    string dbPath = @"C:\imp\baz_gks\" + name + @"\";
-                    DataTable dtHouse = dbf.SelectKartVU(dbPath);
-                    for (int i = 0; i < dtHouse.Rows.Count; i++)
-                    {
-                        DataRow dr = dtHouse.Rows[i];
-                        if(dtHouse.Rows[i][1] != null && dtHouse.Rows[i][1].ToString() != "")
-                            sum += Convert.ToDecimal(dtHouse.Rows[i][1].ToString());
-                    }
-                }
-
-                Console.WriteLine(sum);
-
-                /* var wb = new XLWorkbook();
-                 var ws = wb.Worksheets.Add("1");
-                 int row = 2;
-                 res = SortMyDictionaryByKey(res);
-                 foreach (KeyValuePair<string, decimal> val in res)
-                 {
-                     ws.Cell(row, 1).Value = val.Key;
-                     ws.Cell(row, 2).Value = val.Value;
-                     row++;
-                 }
-                 wb.SaveAs(@"C:\temp\saldoServer.xlsx");*/
+                
             }
             #endregion
 
-            #region 26
+            #region 26 Free
             else if (type == 26)
             {
-                List<string> bases = new List<string>();
-                bases.Add(@"C:\imp\Паспортистка\P01");
-                string dbPath = @"C:\imp\Паспортистка\P01\";
-                DataTable dtHouse = dbf.SelectKGLC(dbPath);
-                DataTable dtPasskart = dbf.SelectPasskart(dbPath);
-                List<string> kkods = new List<string>();
-                List<string> geus = new List<string>();
-                geus.Add("35");
-                geus.Add("36");
-                geus.Add("37");
-                geus.Add("38");
-                geus.Add("39");
-                geus.Add("42");
-                geus.Add("43");
-                geus.Add("46");
-                geus.Add("50");
-                geus.Add("59");
-                geus.Add("66");
-                geus.Add("67");
-                geus.Add("68");
-                geus.Add("69");
-                geus.Add("72");
-                geus.Add("73");
-                geus.Add("74");
-                geus.Add("92");
-                for (int i = 0; i < dtHouse.Rows.Count; i++)
-                {
-                    if (!kkods.Contains(dtHouse.Rows[i][0].ToString()))
-                    {
-                        kkods.Add(dtHouse.Rows[i][0].ToString());
-                        for (int j = 0; j < dtPasskart.Rows.Count; j++)
-                        {
-                            if (dtHouse.Rows[i][0].ToString() == dtPasskart.Rows[j][1].ToString())
-                            {
-                                if (!geus.Contains(dtPasskart.Rows[j][0].ToString()))
-                                {
-                                    dbf.DeleteKglc(dbPath, dtHouse.Rows[i][0].ToString());
-                                }
-                                break;
-                            }
-                        }
-                    }
-                }
+                
             }
             #endregion
 
-            #region 4
+            #region 4 Free
             else if (type == 4)
             {
-                Dictionary<string, string> bases = new Dictionary<string, string>();
-                bases.Add("BAZ_ALT", "78");
-                bases.Add("BAZ_AYK", "79");
-                bases.Add("BAZ_TREST", "82");
-                bases.Add("baz_gks", "131");
-                bases.Add("baz_rem", "130");
-                List<string> kHouse = new List<string>();
-                List<string> vu = new List<string>() { "0201", "0202" };
-                var wb = new XLWorkbook();
-                foreach (KeyValuePair<string, string> db in bases)
-                {
-                    int rows = 1;
-                    string name = db.Key;
-                    var ws = wb.Worksheets.Add(name);
-                    string dbPath = @"C:\imp\" + name + @"\spr\";
-                    string kodYK = "1111";
-                    DataTable dtNormTemp = dbf.SelectNorm(dbPath);
-                    DataTable dtHouseTemp = dbf.SelectHouse2(dbPath);
-                    DataTable dtTarifTemp = dbf.SelectTarif(dbPath);
-                    DataTable dtNorm = new DataTable();
-                    DataTable dtHouse = new DataTable();
-                    DataTable dtTarif = new DataTable();
-                    dtNorm.Columns.Add("1");
-                    dtNorm.Columns.Add("2");
-                    dtNorm.Columns.Add("3");
-                    dtNorm.Columns.Add("4");
-                    dtHouse.Columns.Add("1");
-                    dtHouse.Columns.Add("2");
-                    dtHouse.Columns.Add("3");
-                    dtHouse.Columns.Add("4");
-                    dtHouse.Columns.Add("5");
-                    dtTarif.Columns.Add("1");
-                    dtTarif.Columns.Add("2");
-                    dtTarif.Columns.Add("3");
-                    DataRow row2;
-                    DataRow row3;
-                    DataRow row4;
-                    for (int i = 0; i < dtNormTemp.Rows.Count; i++)
-                    {
-                        if (vu.Contains(dtNormTemp.Rows[i][0].ToString()))
-                        {
-                            row2 = dtNorm.NewRow();
-                            row2["1"] = dtNormTemp.Rows[i][0].ToString();
-                            row2["2"] = dtNormTemp.Rows[i][1].ToString();
-                            row2["3"] = dtNormTemp.Rows[i][2].ToString();
-                            row2["4"] = dtNormTemp.Rows[i][3].ToString();
-                            dtNorm.Rows.Add(row2);
-                        }
-                    }
-                    for (int i = 0; i < dtHouseTemp.Rows.Count; i++)
-                    {
-                        if (vu.Contains(dtHouseTemp.Rows[i][1].ToString()))
-                        {
-                            row3 = dtHouse.NewRow();
-                            if (dtHouseTemp.Rows[i][0].ToString() == "480")
-                            {
-                                string str = "222";
-                                str = str.Substring(1);
-                            }
-                            row3["1"] = dtHouseTemp.Rows[i][0].ToString();
-                            row3["2"] = dtHouseTemp.Rows[i][1].ToString();
-                            row3["3"] = dtHouseTemp.Rows[i][2].ToString();
-                            row3["4"] = dtHouseTemp.Rows[i][3].ToString();
-                            row3["5"] = dtHouseTemp.Rows[i][4].ToString();
-                            dtHouse.Rows.Add(row3);
-                        }
-                    }
-                    for (int i = 0; i < dtTarifTemp.Rows.Count; i++)
-                    {
-                        if (vu.Contains(dtTarifTemp.Rows[i][0].ToString()))
-                        {
-                            row4 = dtTarif.NewRow();
-                            row4["1"] = dtTarifTemp.Rows[i][0].ToString();
-                            row4["2"] = dtTarifTemp.Rows[i][1].ToString();
-                            row4["3"] = dtTarifTemp.Rows[i][2].ToString();
-                            dtTarif.Rows.Add(row4);
-                        }
-                    }
-                    if (name == "baz_rem")
-                    {
-                        string str = "222";
-                        str = str.Substring(1);
-                    }
-                    for (int i = 0; i < dtHouse.Rows.Count; i++)
-                    {
-                        if (!kHouse.Contains(dtHouse.Rows[i][0].ToString() + "|" + name))
-                        {
-                            if (dtHouse.Rows[i][0].ToString() == "931")
-                            {
-                                string sre = "etertertre";
-                                sre.Substring(4);
-                            }
-                            if (dtHouse.Rows[i][2] != null && dtHouse.Rows[i][2].ToString() != "")
-                            {
-                                for (int j = 0; j < dtTarif.Rows.Count; j++)
-                                {
-                                    if (dtHouse.Rows[i][1].ToString() == dtTarif.Rows[j][0].ToString() && dtHouse.Rows[i][2].ToString() == dtTarif.Rows[j][1].ToString())
-                                    {
-                                        for (int k = 0; k < dtNorm.Rows.Count; k++)
-                                        {
-                                            if (dtNorm.Rows[k][0].ToString() == dtTarif.Rows[j][0].ToString() && dtNorm.Rows[k][2].ToString() == dtTarif.Rows[j][2].ToString())
-                                            {
-                                                ws.Cell(rows, 1).Value = dtHouse.Rows[i][0].ToString();
-                                                string str = "";
-                                                str = Convert2(dtNorm.Rows[k][1].ToString(), Encoding.GetEncoding(1251), Encoding.Default);
-                                                ws.Cell(rows, 2).Value = str;
-                                                //ws.Cell(i + 1, 2).Value = dtNormTemp.Rows[i][1].ToString();
-                                                ws.Cell(rows, 3).Value = dtNorm.Rows[k][3].ToString();
-                                                if (dtHouse.Rows[i][0].ToString() == "931")
-                                                {
-                                                    string sre = "etertertre";
-                                                    sre.Substring(4);
-                                                }
-                                                kHouse.Add(dtHouse.Rows[i][0].ToString() + "|" + name);
-                                                rows++;
-                                                break;
-                                            }
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                            else if (dtHouse.Rows[i][3] != null && dtHouse.Rows[i][3].ToString() != "")
-                            {
-                                for (int j = 0; j < dtTarif.Rows.Count; j++)
-                                {
-                                    if (dtHouse.Rows[i][1].ToString() == dtTarif.Rows[j][0].ToString() && dtHouse.Rows[i][3].ToString() == dtTarif.Rows[j][1].ToString())
-                                    {
-                                        for (int k = 0; k < dtNorm.Rows.Count; k++)
-                                        {
-                                            if (dtNorm.Rows[k][0].ToString() == dtTarif.Rows[j][0].ToString() && dtNorm.Rows[k][2].ToString() == dtTarif.Rows[j][2].ToString())
-                                            {
-                                                ws.Cell(rows, 1).Value = dtHouse.Rows[i][0].ToString();
-                                                string str = "";
-                                                str = Convert2(dtNorm.Rows[k][1].ToString(), Encoding.GetEncoding(1251), Encoding.Default);
-                                                ws.Cell(rows, 2).Value = str;
-                                                //ws.Cell(i + 1, 2).Value = dtNormTemp.Rows[i][1].ToString();
-                                                ws.Cell(rows, 3).Value = dtNorm.Rows[k][3].ToString();
-                                                kHouse.Add(dtHouse.Rows[i][0].ToString() + "|" + name);
-                                                if (dtHouse.Rows[i][0].ToString() == "931")
-                                                {
-                                                    string sre = "etertertre";
-                                                    sre.Substring(4);
-                                                }
-                                                rows++;
-                                                break;
-                                            }
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                            else if (dtHouse.Rows[i][4] != null && dtHouse.Rows[i][4].ToString() != "")
-                            {
-                                for (int j = 0; j < dtTarif.Rows.Count; j++)
-                                {
-                                    if (dtHouse.Rows[i][1].ToString() == dtTarif.Rows[j][0].ToString() && dtHouse.Rows[i][4].ToString() == dtTarif.Rows[j][1].ToString())
-                                    {
-                                        for (int k = 0; k < dtNorm.Rows.Count; k++)
-                                        {
-                                            if (dtNorm.Rows[k][0].ToString() == dtTarif.Rows[j][0].ToString() && dtNorm.Rows[k][2].ToString() == dtTarif.Rows[j][2].ToString())
-                                            {
-                                                ws.Cell(rows, 1).Value = dtHouse.Rows[i][0].ToString();
-                                                string str = "";
-                                                str = Convert2(dtNorm.Rows[k][1].ToString(), Encoding.GetEncoding(1251), Encoding.Default);
-                                                ws.Cell(rows, 2).Value = str;
-                                                //ws.Cell(i + 1, 2).Value = dtNormTemp.Rows[i][1].ToString();
-                                                ws.Cell(rows, 3).Value = dtNorm.Rows[k][3].ToString();
-                                                kHouse.Add(dtHouse.Rows[i][0].ToString());
-                                                rows++;
-                                                if (dtHouse.Rows[i][0].ToString() == "931" + "|" + name)
-                                                {
-                                                    string sre = "etertertre";
-                                                    sre.Substring(4);
-                                                }
-                                                break;
-                                            }
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                            else
-                            {
-
-                            }
-                        }
-                    }
-                }
-                wb.SaveAs(@"C:\temp\qwerty6.xlsx");
+                
             }
             #endregion
 
-            #region 3
+            #region 3 Free
             else if (type == 3)
             {
-                string name = "baz_gks";
-                int rows = 687;
-                var wb = new XLWorkbook(@"C:\temp\" + name + ".xlsx");
-                var wb2 = new XLWorkbook(@"C:\temp\" + name + "2.xlsx");
-                for (int i = 1; i <= rows; i++)
-                {
-                    bool b = true;
-                    for (int j = 1; j <= rows; j++)
-                    {
-                        if (Convert.ToString(wb.Worksheet(1).Row(i).Cell(1).Value).Trim() == Convert.ToString(wb2.Worksheet(1).Row(j).Cell(1).Value).Trim()
-                            && Convert.ToString(wb.Worksheet(1).Row(i).Cell(2).Value).Trim() == Convert.ToString(wb2.Worksheet(1).Row(j).Cell(2).Value).Trim())
-                        {
-                            b = false;
-                        }
-                    }
-                    if (b)
-                    {
-                        wb.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                    }
-                }
-                wb.Save();
+               
             }
             #endregion
-            #region 2
+
+            #region 2 Free
             else if (type == 2)
             {
-                var wb = new XLWorkbook();
-                var ws = wb.Worksheets.Add("1");
-                string dbPath = @"C:\imp\baz_sov\SPR\";
-                string name = "baz_sov";
-                DataTable dtHouse = dbf.SelectHouse(dbPath);
-                DataTable dtStreet = dbf.SelectStreet(dbPath);
-                int row = 1;
-                for (int i = 0; i < dtHouse.Rows.Count; i++)
-                {
-                    for (int j = 0; j < dtStreet.Rows.Count; j++)
-                    {
-                        if (dtStreet.Rows[j][3].ToString() == dtHouse.Rows[i][9].ToString())
-                        {
-                            ws.Cell(row, 1).Value = dtStreet.Rows[j][1].ToString();
-                            ws.Cell(row, 2).Value = dtHouse.Rows[i][1].ToString();
-                            ws.Cell(row, 3).Value = dtHouse.Rows[i][10].ToString();
-                            row++;
-                        }
-                    }
-                }
-                wb.SaveAs(@"C:\temp\" + name + ".xlsx");
+                
             }
             #endregion
-            #region 1
+
+            #region 1 Free
             if (type == 1)//запись из Эксельки
             {
-                string nameReg = "печерская-151";
-                StreamWriter sw = new StreamWriter(@"C:\temp\" + nameReg + ".txt", false, Encoding.Unicode);
-                DataTable dtHouse = new DataTable();
-                DataTable dtPeople = new DataTable();
-                var wb = new XLWorkbook(@"C:\temp\печерская-151.xlsx");
-                DataRow row;
-                DataTable dt1 = new System.Data.DataTable();
-                dt1.Columns.Add("1");
-                dt1.Columns.Add("2");
-                dt1.Columns.Add("3");
-                dt1.Columns.Add("4");
-                dt1.Columns.Add("5");
-                dt1.Columns.Add("6");
-                dt1.Columns.Add("7");
-                dt1.Columns.Add("8");
-                for (int i = 2; i <= 202; i++)//34276
-                {
-                    row = dt1.NewRow();
-                    row["1"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(3).Value);
-                    row["2"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(4).Value);
-                    row["3"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(7).Value);
-                    row["4"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(8).Value);
-                    row["5"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(9).Value);
-                    row["6"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(11).Value);
-                    row["7"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(12).Value);
-                    if (Convert.ToString(wb.Worksheet(1).Row(i).Cell(13).Value) == "Да")
-                        row["8"] = 1;
-                    else
-                        row["8"] = 0;
-                    dt1.Rows.Add(row);
-                }
-                //List<string> code = new List<string>() { "6700087", "6700127", "6700064", "6700128", "6700034", "6700103", "6700078", "6700030", "6700221", "6700398", "6700397" };
-                //dtHouse = ora.SelectHouse(code);
-                //dtPeople = ora.SelectLN4(code);
-                Dictionary<string, int> manOrgName = new Dictionary<string, int>();
-                List<string> p = new List<string>();
-                int manOrgCode = 3000;
-                int inn = 11111111;// 11111111
-                int kpp = 2222222;//2222222
-
-                /*
-                for (int j = 0; j < dt1.Rows.Count; j++)
-                {
-                    string rowWrite = "";
-                    //1
-                    rowWrite += "5|";
-                    //2
-                    if (!manOrgName.ContainsKey(dt1.Rows[j][3].ToString()))
-                    {
-                        manOrgCode++;
-                        manOrgName.Add(dt1.Rows[j][3].ToString(), manOrgCode);
-                        rowWrite += manOrgCode + "|";
-                        //3
-                        rowWrite += dt1.Rows[j][3].ToString() + "|||";
-                        //6
-                        inn++;
-                        rowWrite += inn + "|";
-                        //7
-                        kpp++;
-                        rowWrite += kpp + "|";
-                        //8
-                        rowWrite += dt1.Rows[j][5].ToString() + "|";
-                        //9
-                        rowWrite += dt1.Rows[j][6].ToString() + "|";
-                        //10
-                        rowWrite += dt1.Rows[j][7].ToString() + "||";
-                        //11
-                        //rowIns
-                        sw.WriteLine(rowWrite);
-                    }
-
-                }
-                List<string> mo = new List<string>();
-                for (int j = 0; j < dt1.Rows.Count; j++)
-                {
-                    if (!mo.Contains(dt1.Rows[j][2].ToString()))
-                    {
-                        dtHouse = ora.SelectHouseCode(dt1.Rows[j][2].ToString());//Загружаем дом
-                        mo.Add(dt1.Rows[j][2].ToString());
-                        for (int i = 0; i < dtHouse.Rows.Count; i++)
-                        {
-                            string rowWrite = "";
-                            //1
-                            rowWrite += dtHouse.Rows[i][0].ToString() + "||";
-                            //3
-                            rowWrite += dtHouse.Rows[i][2].ToString() + "|";
-                            //4
-                            rowWrite += dtHouse.Rows[i][3].ToString() + "|";
-                            //5
-                            if (dtHouse.Rows[i][17].ToString().Contains("Тольятти"))
-                                rowWrite += "|";
-                            else
-                            {
-                                if (dtHouse.Rows[i][17] != null && dtHouse.Rows[i][17].ToString() != "")
-                                    rowWrite += dtHouse.Rows[i][17].ToString() + "|";
-                                else
-                                    rowWrite += dtHouse.Rows[i][4].ToString().Split(',')[0] + "|";
-                            }
-                            //6
-                            if (dtHouse.Rows[i][18] != null && dtHouse.Rows[i][18].ToString() != "")
-                                rowWrite += dtHouse.Rows[i][18].ToString() + "|";
-                            else
-                                rowWrite += "|";
-                            //7
-                            rowWrite += dtHouse.Rows[i][19].ToString() + "|";
-                            //8
-                            if (dtHouse.Rows[i][20] != null && dtHouse.Rows[i][20].ToString() != "")
-                                rowWrite += dtHouse.Rows[i][20].ToString() + "|";
-                            else
-                                rowWrite += "|";
-                            //9
-                            rowWrite += "666" + "|";
-                            //10
-                            rowWrite += dtHouse.Rows[i][6].ToString() + "|";
-                            //11
-                            if (dtHouse.Rows[i][7] != null && dtHouse.Rows[i][7].ToString() != "")
-                                rowWrite += dtHouse.Rows[i][7].ToString() + "|";
-                            else
-                                rowWrite += "1|";
-                            //12
-                            rowWrite += dtHouse.Rows[i][8].ToString() + "|";
-                            //13
-                            rowWrite += dtHouse.Rows[i][9].ToString() + "|||";
-                            //16
-                            rowWrite += "100||";
-                            //rowWrite += dtHouse.Rows[i][12].ToString() + "||";
-                            //18
-                            rowWrite += dtHouse.Rows[i][14].ToString() + "||";
-                            bool t = true;
-                            //20
-                            if (dtHouse.Rows[i][16] != null && dtHouse.Rows[i][16].ToString() != "")
-                                rowWrite += dtHouse.Rows[i][16].ToString() + "|";
-                            else
-                            {
-                                rowWrite += "0000|";
-                            }
-                            if (t)
-                                sw.WriteLine(rowWrite);
-                        }
-                    }
-                }*/
-                Dictionary<string, int> dict = new Dictionary<string, int>();
-                int ownCode = 99999;
-
-                for (int j = 0; j < dt1.Rows.Count; j++)
-                {
-                    //код ЛС уыеличиваем
-                    
-                    string rowWrite = "";
-                    //1
-                    rowWrite += "4||";
-                    //3
-                    rowWrite += "1921|";
-                    //4
-                    rowWrite += dt1.Rows[j][0].ToString() + "|";
-                    ownCode--;
-                    //5
-                    rowWrite += "1|";
-                    //6
-                    rowWrite += dt1.Rows[j][1].ToString() + "||||";
-                    //10
-                    rowWrite += dt1.Rows[j][2].ToString() + "||||||";
-                    //16
-                    rowWrite += dt1.Rows[j][3].ToString() + "|";
-                    //17
-                    rowWrite += "0|";
-                    //18
-                    rowWrite += "0|";
-                    //19
-                    rowWrite += "1|";
-                    //20
-                    rowWrite += dt1.Rows[j][5].ToString() + "|";
-                    //21
-                    rowWrite += dt1.Rows[j][6].ToString() + "|||";
-                    //24
-                    rowWrite += "0|||||||||";
-                    //33
-                    rowWrite += dt1.Rows[j][7].ToString() + "||||||";
-                    sw.WriteLine(rowWrite);
-                }
-                sw.Close();
+                
             }
             #endregion
-            #region 0
+
+            #region 0 формирование текстового файла для загрузки в биллинг
             else if (type == 0)
             {
-                DataTable dtHouse = new DataTable();
-                DataTable dtPeople = new DataTable();
-                var wb = new XLWorkbook(@"C:\temp\Копия Ставропольский район.xlsx");
-                DataRow row;
-                DataTable dt1 = new System.Data.DataTable();
-                dt1.Columns.Add("1");
-                for (int i = 5; i <= 107; i++)//34276
-                {
-                    row = dt1.NewRow();
-                    row["1"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(2).Value);
-                    dt1.Rows.Add(row);
-                }
-                //List<string> code = new List<string>() { "6700087", "6700127", "6700064", "6700128", "6700034", "6700103", "6700078", "6700030", "6700221", "6700398", "6700397" };
-                //dtHouse = ora.SelectHouse(code);
-                //dtPeople = ora.SelectLN4(code);
-                StreamWriter sw = new StreamWriter(@"C:\temp\Ставропольский.txt", false);
-                for (int j = 0; j < dt1.Rows.Count; j++)
-                {
-                    dtHouse = ora.SelectHouseCode(dt1.Rows[j][0].ToString());
-
-
-                    for (int i = 0; i < dtHouse.Rows.Count; i++)
-                    {
-                        string rowWrite = "";
-                        rowWrite += dtHouse.Rows[i][0].ToString() + "||";
-                        rowWrite += dtHouse.Rows[i][2].ToString() + "|";
-                        rowWrite += dtHouse.Rows[i][3].ToString() + "|";
-                        if (dtHouse.Rows[i][17].ToString().Contains("Тольятти"))
-                            rowWrite += "|";
-                        else
-                        {
-                            if (dtHouse.Rows[i][17] != null && dtHouse.Rows[i][17].ToString() != "")
-                                rowWrite += dtHouse.Rows[i][17].ToString() + "|";
-                            else
-                                rowWrite += dtHouse.Rows[i][4].ToString().Split(',')[0] + "|";
-                        }
-                        if (dtHouse.Rows[i][18] != null && dtHouse.Rows[i][18].ToString() != "")
-                            rowWrite += dtHouse.Rows[i][18].ToString() + "|";
-                        else
-                            rowWrite += "|";
-                        rowWrite += dtHouse.Rows[i][19].ToString() + "|";
-                        if (dtHouse.Rows[i][20] != null && dtHouse.Rows[i][20].ToString() != "")
-                            rowWrite += dtHouse.Rows[i][20].ToString() + "|";
-                        else
-                            rowWrite += "|";
-                        rowWrite += dtHouse.Rows[i][5].ToString() + "|";
-                        rowWrite += dtHouse.Rows[i][6].ToString() + "|";
-                        if (dtHouse.Rows[i][7] != null && dtHouse.Rows[i][7].ToString() != "")
-                            rowWrite += dtHouse.Rows[i][7].ToString() + "|";
-                        else
-                            rowWrite += "1|";
-                        rowWrite += dtHouse.Rows[i][8].ToString() + "|";
-                        rowWrite += dtHouse.Rows[i][9].ToString() + "|||";
-                        rowWrite += dtHouse.Rows[i][12].ToString() + "||";
-                        rowWrite += dtHouse.Rows[i][14].ToString() + "||";
-                        bool t = true;
-                        if (dtHouse.Rows[i][16] != null && dtHouse.Rows[i][16].ToString() != "")
-                            rowWrite += dtHouse.Rows[i][16].ToString() + "|";
-                        else
-                        {
-                            rowWrite += "6302800000000|";
-                        }
-                        if (t)
-                            sw.WriteLine(rowWrite);
-                    }
-                }
-                Dictionary<string, int> dict = new Dictionary<string, int>();
-                //int ownCode = 99999;
-                for (int j = 0; j < dt1.Rows.Count; j++)
-                {
-                    dtPeople = ora.SelectLN4Code(dt1.Rows[j][0].ToString());
-                    for (int i = 0; i < dtPeople.Rows.Count; i++)
-                    {
-                        if (dict.ContainsKey(dtPeople.Rows[i][1].ToString()))
-                            dict[dtPeople.Rows[i][1].ToString()]++;
-                        else
-                            dict.Add(dtPeople.Rows[i][1].ToString(), 1);
-                        string rowWrite = "";
-                        rowWrite += dtPeople.Rows[i][0].ToString() + "||";
-                        rowWrite += dtPeople.Rows[i][1].ToString() + "|";
-                        rowWrite += dtPeople.Rows[i][1].ToString() + dict[dtPeople.Rows[i][1].ToString()].ToString().PadLeft(5, '0') + "|";
-                        //ownCode--;
-                        rowWrite += dtPeople.Rows[i][3].ToString() + "|";
-                        rowWrite += dtPeople.Rows[i][4].ToString().Replace("|", "/").Trim() + "||||";
-                        rowWrite += dtPeople.Rows[i][5].ToString().Replace("|", "/") + "||||||";
-                        if (dtPeople.Rows[i][6] != null && dtPeople.Rows[i][6].ToString() != "")
-                            rowWrite += dtPeople.Rows[i][6].ToString() + "|";
-                        else
-                            rowWrite += "0|";
-                        rowWrite += dtPeople.Rows[i][7].ToString() + "|";
-                        rowWrite += dtPeople.Rows[i][8].ToString() + "|";
-                        rowWrite += dtPeople.Rows[i][9].ToString() + "|";
-                        if (dtPeople.Rows[i][10] != null && dtPeople.Rows[i][10].ToString() != "")
-                            rowWrite += dtPeople.Rows[i][10].ToString() + "|";
-                        else
-                            rowWrite += "0|";
-                        if (dtPeople.Rows[i][11] != null && dtPeople.Rows[i][11].ToString() != "")
-                            rowWrite += dtPeople.Rows[i][11].ToString() + "|||";
-                        else
-                            rowWrite += "|||";
-                        rowWrite += dtPeople.Rows[i][12].ToString() + "|||||||||";
-                        rowWrite += dtPeople.Rows[i][13].ToString() + "|||||";
-                        rowWrite += "|";
-                        sw.WriteLine(rowWrite);
-                    }
-                }
-                sw.Close();
+                BillUploadData billUploadData = new BillUploadData();
+                billUploadData.CreateKvarFile();
             }
             #endregion
 
-            #region 27
+            #region 27 Free
             else if (type == 27)
             {
-                DataTable dtHouse = new DataTable();
-                DataTable dtPeople = new DataTable();
-                var wb = new XLWorkbook(@"C:\temp\Копия Ставропольский район.xlsx");
-                var wb2 = new XLWorkbook(@"C:\temp\Копия Электронное ЖКХ.xlsx");
-                DataRow row;
-                DataTable dt1 = new System.Data.DataTable();
-                dt1.Columns.Add("1");
-                dt1.Columns.Add("2");
-                for (int i = 5; i <= 108; i++)//34276
-                {
-                    row = dt1.NewRow();
-                    row["1"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(2).Value);
-                    row["2"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(4).Value).Replace("Ставропольский р-н с. ", "").Replace("Ставропольский р-н пос. ", "").Replace(" ","");
-                    dt1.Rows.Add(row);
-                }
-                //List<string> code = new List<string>() { "6700087", "6700127", "6700064", "6700128", "6700034", "6700103", "6700078", "6700030", "6700221", "6700398", "6700397" };
-                //dtHouse = ora.SelectHouse(code);
-                //dtPeople = ora.SelectLN4(code);
-                StreamWriter sw = new StreamWriter(@"C:\temp\Ставропольский.txt", false);
-                for (int j = 0; j < dt1.Rows.Count; j++)
-                {
-                    dtHouse = ora.SelectHouseCode(dt1.Rows[j][0].ToString());
-                    for (int i = 0; i < dtHouse.Rows.Count; i++)
-                    {
-                        string rowWrite = "";
-                        rowWrite += dtHouse.Rows[i][0].ToString() + "||";
-                        rowWrite += dtHouse.Rows[i][2].ToString() + "|";
-                        rowWrite += dtHouse.Rows[i][3].ToString() + "|";
-                        if (dtHouse.Rows[i][17].ToString().Contains("Тольятти"))
-                            rowWrite += "|";
-                        else
-                        {
-                            if (dtHouse.Rows[i][17] != null && dtHouse.Rows[i][17].ToString() != "")
-                                rowWrite += dtHouse.Rows[i][17].ToString() + "|";
-                            else
-                                rowWrite += dtHouse.Rows[i][4].ToString().Split(',')[0] + "|";
-                        }
-                        if (dtHouse.Rows[i][18] != null && dtHouse.Rows[i][18].ToString() != "")
-                            rowWrite += dtHouse.Rows[i][18].ToString() + "|";
-                        else
-                            rowWrite += "|";
-                        rowWrite += dtHouse.Rows[i][19].ToString() + "|";
-                        if (dtHouse.Rows[i][20] != null && dtHouse.Rows[i][20].ToString() != "")
-                            rowWrite += dtHouse.Rows[i][20].ToString() + "|";
-                        else
-                            rowWrite += "|";
-                        rowWrite += dtHouse.Rows[i][5].ToString() + "|";
-                        rowWrite += dtHouse.Rows[i][6].ToString() + "|";
-                        if (dtHouse.Rows[i][7] != null && dtHouse.Rows[i][7].ToString() != "")
-                            rowWrite += dtHouse.Rows[i][7].ToString() + "|";
-                        else
-                            rowWrite += "1|";
-                        rowWrite += dtHouse.Rows[i][8].ToString() + "|";
-                        rowWrite += dtHouse.Rows[i][9].ToString() + "|||";
-                        rowWrite += dtHouse.Rows[i][12].ToString() + "||";
-                        rowWrite += dtHouse.Rows[i][14].ToString() + "||";
-                        bool t = true;
-                        if (dtHouse.Rows[i][16] != null && dtHouse.Rows[i][16].ToString() != "")
-                            rowWrite += dtHouse.Rows[i][16].ToString() + "|";
-                        else
-                        {
-                            rowWrite += "6302800000000|";
-                        }
-                        if (t)
-                            sw.WriteLine(rowWrite);
-                    }
-                }
-                Dictionary<string, int> dict = new Dictionary<string, int>();
-                 string[] stringSeparators = new string[] { ", кв. " };
-                for (int j = 0; j < dt1.Rows.Count; j++)
-                {
-                    for (int i = 3; i <=1506; i++)
-                    {
-                        //string str = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Split(stringSeparators, StringSplitOptions.None)[0].Replace(" ", "");
-                        //string str2 = dt1.Rows[j][1].ToString();
-                        //Console.WriteLine(str);
-                        //Console.WriteLine(str2);
-                        if (dt1.Rows[j][1].ToString().ToUpper() ==
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Split(stringSeparators, StringSplitOptions.None)[0].Replace(" ", "").ToUpper())
-                        {
-                            wb2.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                            if (dict.ContainsKey(dt1.Rows[j][0].ToString()))
-                                dict[dt1.Rows[j][0].ToString()]++;
-                            else
-                                dict.Add(dt1.Rows[j][0].ToString(), 1);
-                            string rowWrite = "";
-                            //1 Тип строки
-                            rowWrite += "4||";
-                            //3.Уникальный код дома в системе отправителя
-                            rowWrite += dt1.Rows[j][0].ToString() + "|";
-                            //4.	№ ЛС в системе поставщика
-                            rowWrite += dt1.Rows[j][0].ToString() + dict[dt1.Rows[j][0].ToString()].ToString().PadLeft(5, '0') + "|";
-                            //5.	Тип ЛС (1 – жилая квартира, 2 – субабонент / арендатор)
-                            rowWrite += "1|";
-                            //6.	Фамилия квартиросъемщика
-                            rowWrite += Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value).Replace("|", "/").Trim() + "||||";
-                            //10.	Квартира
-                            rowWrite += Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Split(stringSeparators, StringSplitOptions.None)[1].Replace("|", "/").Trim() + "||||||";
-                            //16.	Количество проживающих
-                            rowWrite += "0|";
-                            //17.	Количество врем. прибывших жильцов
-                            rowWrite += "0|";
-                            //18.	Количество  врем. убывших жильцов
-                            rowWrite += "0|";
-                            //19.	Количество комнат
-                            rowWrite += "1|";
-                            //20.	Общая площадь (площадь применяемая для расчета большинства площадных услуг)
-                            if (Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value) != "не начисл.")
-                                rowWrite += Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value) + "|";
-                            else
-                                rowWrite += "0|";
-                            //21.	Жилая площадь 
-                            rowWrite += "|||";
-                            //24.	Признак коммунальной квартиры(1-да, 0 –нет)
-                            rowWrite += "0|||||||||";
-                            //33.	Наличие забора из открытой системы отопления (1-да, 0 –нет)
-                            rowWrite += "1||||||";
-                            sw.WriteLine(rowWrite);
-                        }
-                    }
-                }
-                sw.Close();
-                wb2.Save();
-            }
-            #endregion
-
-            #region 28
-            else if (type == 28)
-            {
-                DataTable dtHouse = new DataTable();
-                DataTable dtPeople = new DataTable();
-                var wb = new XLWorkbook(@"C:\temp\Копия Ставропольский район.xlsx");
-                var wb2 = new XLWorkbook(@"C:\temp\Копия Электронное ЖКХ.xlsx");
-                DataRow row;
-                DataTable dt1 = new System.Data.DataTable();
-                dt1.Columns.Add("1");
-                dt1.Columns.Add("2");
-                for (int i = 5; i <= 108; i++)//34276
-                {
-                    row = dt1.NewRow();
-                    row["1"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(2).Value);
-                    row["2"] = Convert.ToString(wb.Worksheet(1).Row(i).Cell(4).Value).Replace("Ставропольский р-н с. ", "").Replace("Ставропольский р-н пос. ", "").Replace(" ", "");
-                    dt1.Rows.Add(row);
-                }
-
                 
-                string[] stringSeparators = new string[] { ", кв. " };
-                for (int j = 0; j < dt1.Rows.Count; j++)
-                {
-                    for (int i = 3; i <= 1506; i++)
-                    {
-                        if (dt1.Rows[j][1].ToString().ToUpper() ==
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Split(stringSeparators, StringSplitOptions.None)[0].Replace(" ", "").ToUpper())
-                        {
-                            string str = ora.InsertPeople(dt1.Rows[j][0].ToString(), 
-                                Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Split(stringSeparators, StringSplitOptions.None)[1].Trim(),
-                                Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value), Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value));
-                            if (str != "ЗАГРУЖЕНО")
-                                Console.WriteLine();
-                        }
-                    }
-                }
-                wb2.Save();
             }
             #endregion
 
-            #region 29
-            else if (type == 29)
-            {
-                DataTable dtHouse = new DataTable();
-                DataTable dtPeople = new DataTable();
-                var wb2 = new XLWorkbook(@"C:\temp\Копия Список лицевых счетов.xlsx");
-                string[] stringSeparators = new string[] { ", кв." };
-                string[] stringSeparators2 = new string[] { "офис  " };
-                for (int i = 77; i <= 115; i++)
-                {
-                    try
-                    {
-                        string str = ora.InsertPeople2("8901531",
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Trim().Split(stringSeparators, StringSplitOptions.None)[1],
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value).Trim(), Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value)
-                            , Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value));
-                        if (str != "ЗАГРУЖЕНО")
-                            Console.WriteLine(str);
-                    }
-                    catch
-                    {
-                        try
-                        {
-                            string str = ora.InsertOffice("8901401",
-                            "офис " + Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Trim().Split(stringSeparators2, StringSplitOptions.None)[1],
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value).Trim(), Convert.ToString(wb2.Worksheet(1).Row(i).Cell(9).Value));
-                            if (str != "ЗАГРУЖЕНО")
-                                Console.WriteLine(str);
-                        }
-                        catch
-                        {
-                        }
-                    }
-
-                }
-                wb2.Save();
-            }
-            #endregion
-
-            #region 30
+            #region 30 InsertHouseManOrg
             else if (type == 30)
             {
-                var wb2 = new XLWorkbook(@"C:\temp\МУП УД.xlsx");
-                for (int i = 4; i <= 108; i++)
-                {
-
-                    string str = ora.InsertHouseManOrg(
-                        Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value).Trim(),
-                        "02.03.2015", "17729406");
-                    if (str != "ЗАГРУЖЕНО")
-                        Console.WriteLine(str);
-                }
-                wb2.Save();
+                EzhkhInsertData ezhkhInsertData = new EzhkhInsertData();
+                ezhkhInsertData.AddHouseManOrg();
             }
             #endregion
 
-            #region 310
+            #region 310 InsertHouseManOrg
             else if (type == 310)
             {
-                var wb2 = new XLWorkbook(@"C:\temp\forImport.xlsx");
-                for (int i = 3; i <= 9; i++)
-                {
-                    if (Convert.ToString(wb2.Worksheet(1).Row(i).Cell(5).Value).Trim() != "")
-                    {
-                        string str = ora.InsertHouseManOrg(
-                        Convert.ToString(wb2.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                        Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value).Trim().Substring(0,10),
-                        "17731219");
-                        if (str != "ЗАГРУЖЕНО")
-                            Console.WriteLine(str + "||1||" + i.ToString());
-                    }
-                }
-                for (int i = 4; i <= 6; i++)
-                {
-                    if (Convert.ToString(wb2.Worksheet(2).Row(i).Cell(5).Value).Trim() != "")
-                    {
-                        string str = ora.InsertHouseManOrg(
-                        Convert.ToString(wb2.Worksheet(2).Row(i).Cell(5).Value).Trim(),
-                        Convert.ToString(wb2.Worksheet(2).Row(i).Cell(4).Value).Trim().Substring(0, 10),
-                        "17731219");
-                        if (str != "ЗАГРУЖЕНО")
-                            Console.WriteLine(str + "||2||" + i.ToString());
-                    }
-                }
-                for (int i = 4; i <= 30; i++)
-                {
-                    if (Convert.ToString(wb2.Worksheet(3).Row(i).Cell(5).Value).Trim() != "")
-                    {
-                        string str = ora.InsertHouseManOrg(
-                        Convert.ToString(wb2.Worksheet(3).Row(i).Cell(5).Value).Trim(),
-                        Convert.ToString(wb2.Worksheet(3).Row(i).Cell(4).Value).Trim().Substring(0, 10),
-                        "17731219");
-                        if (str != "ЗАГРУЖЕНО")
-                            Console.WriteLine(str + "||3||" + i.ToString());
-                    }
-                }
-                for (int i = 3; i <= 68; i++)
-                {
-                    if (Convert.ToString(wb2.Worksheet(4).Row(i).Cell(5).Value).Trim() != "")
-                    {
-                        string str = ora.InsertHouseManOrg(
-                        Convert.ToString(wb2.Worksheet(4).Row(i).Cell(5).Value).Trim(),
-                        Convert.ToString(wb2.Worksheet(4).Row(i).Cell(4).Value).Trim().Substring(0,10),
-                        "17731219");
-                        if (str != "ЗАГРУЖЕНО")
-                            Console.WriteLine(str + "||4||" + i.ToString());
-                    }
-                }
-                wb2.Save();
-            }
-            #endregion
-
-            #region 300
-            else if (type == 300)
-            {
-                var wb2 = new XLWorkbook(@"C:\temp\forImport.xlsx");
-                for (int i = 3; i <= 9; i++)
-                {
-
-                    DataTable dt = ora.SelectGkhCode(
-                        Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Trim(),
-                        Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value).Trim());
-                    if (dt.Rows.Count == 1)
-                    {
-                        wb2.Worksheet(1).Row(i).Cell(5).Value = dt.Rows[0][0];
-                    }
-                    else if (dt.Rows.Count == 0)
-                    {
-                        wb2.Worksheet(1).Row(i).Cell(5).Style.Fill.BackgroundColor = XLColor.Red;
-                    }
-                    else if (dt.Rows.Count >= 2)
-                    {
-                        wb2.Worksheet(1).Row(i).Cell(5).Style.Fill.BackgroundColor = XLColor.Yellow;
-                    }
-                }
-                for (int i = 4; i <= 6; i++)
-                {
-
-                    DataTable dt = ora.SelectGkhCode(
-                        Convert.ToString(wb2.Worksheet(2).Row(i).Cell(2).Value).Trim(),
-                        Convert.ToString(wb2.Worksheet(2).Row(i).Cell(3).Value).Trim());
-                    if (dt.Rows.Count == 1)
-                    {
-                        wb2.Worksheet(2).Row(i).Cell(5).Value = dt.Rows[0][0];
-                    }
-                    else if (dt.Rows.Count == 0)
-                    {
-                        wb2.Worksheet(2).Row(i).Cell(5).Style.Fill.BackgroundColor = XLColor.Red;
-                    }
-                    else if (dt.Rows.Count >= 2)
-                    {
-                        wb2.Worksheet(2).Row(i).Cell(5).Style.Fill.BackgroundColor = XLColor.Yellow;
-                    }
-                }
-                for (int i = 4; i <= 32; i++)
-                {
-
-                    DataTable dt = ora.SelectGkhCode(
-                        Convert.ToString(wb2.Worksheet(3).Row(i).Cell(2).Value).Trim(),
-                        Convert.ToString(wb2.Worksheet(3).Row(i).Cell(3).Value).Trim());
-                    if (dt.Rows.Count == 1)
-                    {
-                        wb2.Worksheet(3).Row(i).Cell(5).Value = dt.Rows[0][0];
-                    }
-                    else if (dt.Rows.Count == 0)
-                    {
-                        wb2.Worksheet(3).Row(i).Cell(5).Style.Fill.BackgroundColor = XLColor.Red;
-                    }
-                    else if (dt.Rows.Count >= 2)
-                    {
-                        wb2.Worksheet(3).Row(i).Cell(5).Style.Fill.BackgroundColor = XLColor.Yellow;
-                    }
-                }
-                for (int i = 3; i <= 68; i++)
-                {
-
-                    DataTable dt = ora.SelectGkhCode(
-                        Convert.ToString(wb2.Worksheet(4).Row(i).Cell(2).Value).Trim(),
-                        Convert.ToString(wb2.Worksheet(4).Row(i).Cell(3).Value).Trim());
-                    if (dt.Rows.Count == 1)
-                    {
-                        wb2.Worksheet(4).Row(i).Cell(5).Value = dt.Rows[0][0];
-                    }
-                    else if (dt.Rows.Count == 0)
-                    {
-                        wb2.Worksheet(4).Row(i).Cell(5).Style.Fill.BackgroundColor = XLColor.Red;
-                    }
-                    else if (dt.Rows.Count >= 2)
-                    {
-                        wb2.Worksheet(4).Row(i).Cell(5).Style.Fill.BackgroundColor = XLColor.Yellow;
-                    }
-                }
-                wb2.Save();
+                EzhkhInsertData ezhkhInsertData = new EzhkhInsertData();
+                ezhkhInsertData.AddHouseManOrgFromFile();
             }
             #endregion
 
             //Поставщики коммунальных услуг
-            #region 31
+            #region 31 InsertCommunalOrg
             else if (type == 31)
             {
-
-                string str = ora.InsertCommunalOrg("9548129");
-                if (str != "ЗАГРУЖЕНО")
-                    Console.WriteLine(str);
+                EzhkhInsertData ezhkhInsertData = new EzhkhInsertData();
+                ezhkhInsertData.AddCommunalOrg();
             }
             #endregion
 
-            #region 42
+            #region 42 InsertResOrg
             else if (type == 42)
             {
-
-                string str = ora.InsertResOrg("18512502");
-                if (str != "ЗАГРУЖЕНО")
-                    Console.WriteLine(str);
+                EzhkhInsertData ezhkhInsertData = new EzhkhInsertData();
+                ezhkhInsertData.AddResOrg();
             }
             #endregion
 
             #region 32
             else if (type == 32)
             {
-                var wb2 = new XLWorkbook(@"C:\temp\Сведения о квартирах.xlsx");
-                for (int i = 2; i <= 256; i++)
-                {
-                    try
-                    {
-                        string str = pg.InsertPeople5("9100451",
-                            Convert.ToInt32(Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value).Trim()),
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                            "0",
-                            "Да",
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value).Trim(),
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Trim());
-                        if (str != "ЗАГРУЖЕНО")
-                            Console.WriteLine(str);
-                    }
-                    catch
-                    {
-                       
-                    }
-
-                }
-                wb2.Save();
+                InsertPeople insertPeople = new InsertPeople();
+                insertPeople.Ins1();
             }
             #endregion
 
             #region 33
             else if (type == 33)
             {
-                DataTable dtHouse = new DataTable();
-                DataTable dtPeople = new DataTable();
-                var wb2 = new XLWorkbook(@"C:\temp\Копия Реестр исходных данных кап.ремонт.xlsx");
-                string[] stringSeparators = new string[] { ", кв." };
-                for (int i = 8; i <= 111; i++)
-                {
-                    try
-                    {
-                        string str = ora.InsertPeople("8800162",
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(8).Value).Trim(),
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(10).Value).Trim(),
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(9).Value).Trim());
-                        if (str != "ЗАГРУЖЕНО")
-                            Console.WriteLine(str);
-                    }
-                    catch
-                    {
-                       
-                    }
-
-                }
-                wb2.Save();
+                InsertPeople insertPeople = new InsertPeople();
+                insertPeople.Ins2();
             }
             #endregion
 
             #region 34
             else if (type == 34)
             {
-                DataTable dtHouse = new DataTable();
-                DataTable dtPeople = new DataTable();
-                var wb2 = new XLWorkbook(@"C:\temp\Копия Площадь 76.xlsx");
-                for (int i = 3; i <= 441; i++)
-                {
-                    try
-                    {
-                        string str = ora.InsertPeople("9700035",
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value).Trim().Split('-')[1],
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Trim().Substring(4), "0",
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value), "0");
-                        if (str != "ЗАГРУЖЕНО")
-                            Console.WriteLine(str);
-                    }
-                    catch
-                    {
-
-                    }
-
-                }
-                wb2.Save();
+                InsertPeople insertPeople = new InsertPeople();
+                insertPeople.Ins3();
             }
             #endregion
 
             #region 35
             else if (type == 35)
             {
-                DataTable dtHouse = new DataTable();
-                DataTable dtPeople = new DataTable();
-                var wb2 = new XLWorkbook(@"C:\temp\Копия Фрунз. 8 В.xlsx");
-                for (int i = 6; i <= 17; i++)
-                {
-                    try
-                    {
-                        string str = ora.InsertPeople("9700760",
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value).Trim(),
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Trim(),
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value),
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value), 
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(5).Value), "30");
-                        if (str != "ЗАГРУЖЕНО")
-                            Console.WriteLine(str);
-                    }
-                    catch
-                    {
-
-                    }
-
-                }
-                wb2.Save();
+                InsertPeople insertPeople = new InsertPeople();
+                insertPeople.Ins4();
             }
             #endregion
 
@@ -2853,31 +651,10 @@ namespace ConsoleApplication1
             }
             #endregion
 
-            #region 39
+            #region 39 Free
             else if (type == 39)
             {
-                var wb2 = new XLWorkbook(@"C:\temp\Сведения о квартирах.xlsx");
-                for (int i = 8; i <= 15; i++)
-                {
-                    try
-                    {
-                        string str = ora.InsertPeople("8000058",
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Trim(),
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                            "0",
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value), 
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(5).Value),
-                            Convert.ToString(wb2.Worksheet(1).Row(i).Cell(6).Value));
-                        if (str != "ЗАГРУЖЕНО")
-                            Console.WriteLine(str);
-                    }
-                    catch
-                    {
-
-                    }
-
-                }
-                wb2.Save();
+               
             }
             #endregion
 
@@ -4248,281 +2025,12 @@ namespace ConsoleApplication1
             }
             #endregion
 
-            //согрузка ПС КАРТОТЕКА
+            //загрузка ПС КАРТОТЕКА
             #region 65
             else if (type == 65)
             {
-                Console.Write("Введите наименование базы:");
-                string database = Console.ReadLine();
-                var book = new XLWorkbook(@"C:\temp\часть 1 и 2.xlsx");
-                string nzp_kvar = "";
-                bool isClear = false;
-                for (int i = 2; i <= 11440; i++)
-                {     
-                    if(Convert.ToString(book.Worksheet(1).Row(i).Cell(32).Value).Trim() != "") 
-                        continue;  
-                    if(i%100 == 0)
-                        Console.WriteLine(i);           
-                    if (Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim() != "")
-                    {
-                        nzp_kvar = pg.SelectNzpKvar(database,
-                           Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim(),
-                           Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                           Convert.ToString(book.Worksheet(1).Row(i).Cell(4).Value).Trim());
-                        isClear = false;
-                        continue;
-                    }
-                       
-                    if (nzp_kvar.Split('|')[0] == "0")
-                    {
-                        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                        book.Worksheet(1).Row(i).Cell(31).Value = nzp_kvar.Split('|')[1];
-                    }
-                    else if (nzp_kvar.Split('|')[0] == "-1")
-                    {
-                        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Orange;
-                        book.Worksheet(1).Row(i).Cell(31).Value = nzp_kvar.Split('|')[1];
-                    }
-                    else
-                    {
-                        if (!isClear)
-                        {
-                            pg.ClearKart(database, nzp_kvar.Split('|')[0]);
-                            isClear = true;
-                        }
-
-                        book.Worksheet(1).Row(i).Cell(32).Value = "1";
-                        int nzp_gil = pg.InsertGil(database);
-                        int nzp_rod = 0;
-                        #region nzp_rod
-                        switch (Convert.ToString(book.Worksheet(1).Row(i).Cell(100).Value).Trim())
-                        {
-                            case "брат":
-                            {
-                                nzp_rod = 587;
-                                break;
-                            }
-                            case "внук":
-                            {
-                                nzp_rod = 560;
-                                break;
-                            }
-                            case "внучка":
-                            {
-                                nzp_rod = 568;
-                                break;
-                            }
-                            case "гр.муж":
-                            {
-                                nzp_rod = 571;
-                                break;
-                            }
-                            case "двоюродн.":
-                            {
-                                nzp_rod = 15;
-                                break;
-                            }
-                            case "дочь":
-                            {
-                                nzp_rod = 559;
-                                break;
-                            }
-                            case "дядя":
-                            {
-                                nzp_rod = 738;
-                                break;
-                            }
-                            case "жена":
-                            {
-                                nzp_rod = 562;
-                                break;
-                            }
-                            case "зять":
-                            {
-                                nzp_rod = 565;
-                                break;
-                            }
-                            case "кс":
-                            {
-                                nzp_rod = 561;
-                                break;
-                            }
-                            case "мать":
-                            {
-                                nzp_rod = 563;
-                                break;
-                            }
-                            case "мать мужа":
-                            {
-                                nzp_rod = 619;
-                                break;
-                            }
-                            case "муж":
-                            {
-                                nzp_rod = 567;
-                                break;
-                            }
-                            case "отец":
-                            {
-                                nzp_rod = 572;
-                                break;
-                            }
-                            case "отчим":
-                            {
-                                nzp_rod = 640;
-                                break;
-                            }
-                            case "падчерица":
-                            {
-                                nzp_rod = 30;
-                                break;
-                            }
-                            case "племянник":
-                            {
-                                nzp_rod = 666;
-                                break;
-                            }
-                            case "племянница":
-                            {
-                                nzp_rod = 899;
-                                break;
-                            }
-                            case "сестра":
-                            {
-                                nzp_rod = 899;
-                                break;
-                            }
-                            case "сноха":
-                            {
-                                nzp_rod = 575;
-                                break;
-                            }
-                            case "сын":
-                            {
-                                nzp_rod = 564;
-                                break;
-                            }
-                            case "сын жены":
-                            {
-                                nzp_rod = 1156;
-                                break;
-                            }
-                            case "тетя":
-                            {
-                                nzp_rod = 596;
-                                break;
-                            }
-                            case "теща":
-                            {
-                                nzp_rod = 594;
-                                break;
-                            }
-                        }
-                        #endregion
-                        int nzp_dok = 0;
-                        int tempDoc = 0;
-                        if (Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim() != "")
-                        {
-                            bool result =
-                                Int32.TryParse(Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim(),
-                                    out tempDoc);
-                            if (!result)
-                            {
-                                nzp_dok = 2;
-                            }
-                            else
-                            {
-                                nzp_dok = 10;
-                            }
-                        }
-                        else
-                        {
-                            nzp_dok = -1;
-                        }
-                        /*
-                        #region nzp_dok
-                        switch (Convert.ToString(book.Worksheet(1).Row(i).Cell(10).Value).Trim())
-                        {
-                            case "паспорт":
-                                {
-                                    nzp_dok = 10;
-                                    break;
-                                }
-                            case "Св-во о рожд.":
-                                {
-                                    nzp_dok = 2;
-                                    break;
-                                }
-                            case "Св-во о рождении":
-                                {
-                                    nzp_dok = 2;
-                                    break;
-                                }
-                            case "Св-во рожд.":
-                                {
-                                    nzp_dok = 2;
-                                    break;
-                                }
-                            default:
-                                {
-                                    nzp_dok = -1;
-                                    break;
-                                }
-                        }
-                        #endregion
-                        */
-                        string serij = "";
-                        if (Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim() != "" && Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim().Length >= 3)
-                        {
-                            if (nzp_dok == 10 &&
-                                Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim().Length >= 4)
-                                serij =
-                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim().Substring(0, 2) +
-                                    " " +
-                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim().Substring(2, 2);
-                            else
-                                serij = Convert.ToString(book.Worksheet(1).Row(i).Cell(15).Value).Trim();
-                        }
-
-                        string rem_ku = (Convert.ToString(book.Worksheet(1).Row(i).Cell(27).Value).Trim() != ""
-                            ? Convert.ToString(book.Worksheet(1).Row(i).Cell(27).Value).Trim() + ", "
-                            : "") +
-                            (Convert.ToString(book.Worksheet(1).Row(i).Cell(28).Value).Trim() != ""
-                            ? Convert.ToString(book.Worksheet(1).Row(i).Cell(28).Value).Trim() + ", "
-                            : "") +
-                              Convert.ToString(book.Worksheet(1).Row(i).Cell(29).Value).Trim() +
-                              (Convert.ToString(book.Worksheet(1).Row(i).Cell(30).Value).Trim() != ""
-                                ? ", " + Convert.ToString(book.Worksheet(1).Row(i).Cell(30).Value).Trim()
-                                : "");
-
-                        int nzp_kart = pg.InsertKart(database, nzp_gil, nzp_kvar.Split('|')[0],
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim().ToUpper(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(7).Value).Trim().ToUpper(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(8).Value).Trim().ToUpper(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(14).Value).Trim(),
-                                                    "",
-                                                    nzp_dok,
-                                                    serij,
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(18).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(17).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(16).Value).Trim(),
-                                                    "П",
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(13).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(12).Value).Trim(),
-                                                    nzp_rod,
-                                                    "",
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(20).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(21).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(22).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(23).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(24).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(25).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(26).Value).Trim(),
-                                                    rem_ku);
-                        pg.InsertGrgd(nzp_kart);
-                    }
-                }
-                book.Save();
+                BillKart billKart = new BillKart();
+                billKart.LoadKart();
             }
             #endregion
 
@@ -4590,406 +2098,403 @@ namespace ConsoleApplication1
                 //comment = "заварен мусоропровод";
                 //for (int i = 4; i <= 60; i++)
                 //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(database, comment);
-                //        pg.InsertPerekidka(database,
-                //            Convert.ToInt32(nzp_kvar[0]),
-                //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1),
-                //            nzp_doc_base,
-                //            Convert.ToInt32(nzp_kvar[1]),
-                //            17,
-                //            101179,
-                //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
-                //    }
-                //}
-                //book.Save();
-                //book = new XLWorkbook(@"C:\temp\Недопоставка по Кр.Коммунаров 17 (коммуналка)-1.xlsx");
-                //comment = "заварен мусоропровод";
-                //for (int i = 4; i <= 56; i++)
-                //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(database, comment);
-                //        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
-                //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1), nzp_doc_base,
-                //            Convert.ToInt32(nzp_kvar[1]),
-                //            17, 101179,
-                //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
-                //    }
-                //}
-                //book.Save();
-                //book = new XLWorkbook(@"C:\temp\Недопоставка по Печерской 151.xlsx");
-                //comment = "заварен мусоропровод";
-                //for (int i = 4; i <= 204; i++)
-                //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(database, comment);
-                //        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
-                //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1), nzp_doc_base,
-                //            Convert.ToInt32(nzp_kvar[1]),
-                //            17, 101179,
-                //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
-                //    }
-                //}
-                //book.Save();
-                //book = new XLWorkbook(@"C:\temp\Недопоставка по Гастелло 47.3 (коммуналка).xlsx");
-                //comment = "заварен мусоропровод";
-                //for (int i = 4; i <= 58; i++)
-                //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(database, comment);
-                //        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
-                //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(8).Value) * (-1), nzp_doc_base,
-                //            Convert.ToInt32(nzp_kvar[1]),
-                //            17, 101179,
-                //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
-                //    }
-                //}
-                //book.Save();
-                book = new XLWorkbook(@"C:\temp\Недопоставка по Гастелло 47.3 (изолированные).xlsx");
-                comment = "заварен мусоропровод";
-                for (int i = 4; i <= 60; i++)
-                {
-                    if(i != 24 && i != 56)
-                        continue;
-             
-                    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                    if (nzp_kvar == null)
+                    //    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(database, comment);
+                    //        pg.InsertPerekidka(database,
+                    //            Convert.ToInt32(nzp_kvar[0]),
+                    //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1),
+                    //            nzp_doc_base,
+                    //            Convert.ToInt32(nzp_kvar[1]),
+                    //            17,
+                    //            101179,
+                    //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
+                    //    }
+                    //}
+                    //book.Save();
+                    //book = new XLWorkbook(@"C:\temp\Недопоставка по Кр.Коммунаров 17 (коммуналка)-1.xlsx");
+                    //comment = "заварен мусоропровод";
+                    //for (int i = 4; i <= 56; i++)
+                    //{
+                    //    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(database, comment);
+                    //        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
+                    //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1), nzp_doc_base,
+                    //            Convert.ToInt32(nzp_kvar[1]),
+                    //            17, 101179,
+                    //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
+                    //    }
+                    //}
+                    //book.Save();
+                    //book = new XLWorkbook(@"C:\temp\Недопоставка по Печерской 151.xlsx");
+                    //comment = "заварен мусоропровод";
+                    //for (int i = 4; i <= 204; i++)
+                    //{
+                    //    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(database, comment);
+                    //        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
+                    //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1), nzp_doc_base,
+                    //            Convert.ToInt32(nzp_kvar[1]),
+                    //            17, 101179,
+                    //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
+                    //    }
+                    //}
+                    //book.Save();
+                    //book = new XLWorkbook(@"C:\temp\Недопоставка по Гастелло 47.3 (коммуналка).xlsx");
+                    //comment = "заварен мусоропровод";
+                    //for (int i = 4; i <= 58; i++)
+                    //{
+                    //    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(database, comment);
+                    //        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
+                    //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(8).Value) * (-1), nzp_doc_base,
+                    //            Convert.ToInt32(nzp_kvar[1]),
+                    //            17, 101179,
+                    //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
+                    //    }
+                    //}
+                    //book.Save();
+                    //book = new XLWorkbook(@"C:\temp\Недопоставка по Гастелло 47.3 (изолированные).xlsx");
+                    //comment = "заварен мусоропровод";
+                    //for (int i = 4; i <= 60; i++)
+                    //{          
+                    //    List<string> nzp_kvar = pg.SelectNzpKvar(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(database, comment);
+                    //        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
+                    //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(8).Value) * (-1), nzp_doc_base,
+                    //            Convert.ToInt32(nzp_kvar[1]),
+                    //            17, 101179,
+                    //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
+                    //    }
+                    //}
+                    //book.Save();
+                    book = new XLWorkbook(@"C:\temp\недопоставка Мальцева_10.xlsx");
+                    comment = "лифт не работает";
+                    for (int i = 3; i <= 61; i++)
                     {
-                        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                        List<string> nzp_kvar = pg.SelectNzpKvar2(database,
+                            Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                            Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                            Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                        if (nzp_kvar == null)
+                        {
+                            book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                        }
+                        else
+                        {
+                            int nzp_doc_base = pg.InsertDocBase(database, comment);
+                            pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
+                                Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(10).Value) * (-1), nzp_doc_base,
+                                Convert.ToInt32(nzp_kvar[1]),
+                                17, 101179,
+                                year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
+                        }
                     }
-                    else
-                    {
-                        int nzp_doc_base = pg.InsertDocBase(database, comment);
-                        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
-                            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(8).Value) * (-1), nzp_doc_base,
-                            Convert.ToInt32(nzp_kvar[1]),
-                            17, 101179,
-                            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
-                    }
+                    book.Save();
+                    //book = new XLWorkbook(@"C:\temp\кр.ком 17 б.xlsx");
+                    //comment = "Лифт не работал с 01.09-20.09.2015";
+                    //for (int i = 4; i <= 114; i++)
+                    //{
+                    //    List<string> nzp_kvar = pg.SelectNzpKvar2(Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                    //                                   Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                    //                                   Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(comment);
+                    //        pg.InsertPerekidka(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
+                    //    }
+                    //}
+                    //book = new XLWorkbook(@"C:\temp\Генератор по Гастелло 47 по начислению ОДН электро.xlsx");
+                    //comment = "перерасчет";
+                    //for (int i = 4; i <= 135; i++)
+                    //{
+                    //    List<string> nzp_kvar = pg.SelectNzpKvar2(Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim(),
+                    //                                            Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim().Split('-')[1].Trim().Split(' ')[6].Trim(),
+                    //                                            Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim().Split('-')[2].Trim().Split(' ')[1].Trim(),
+                    //                                     2);
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(comment);
+                    //        pg.InsertPerekidka4(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(8).Value) * (-1), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
+                    //    }
+                    //}
+                    //book.Save();
+                    //book = new XLWorkbook(@"C:\temp\генератор по Гикам май.xlsx");
+                    //comment = "перекидка";
+                    //for (int i = 4; i <= 38; i++)
+                    //{
+                    //    List<string> nzp_kvar = pg.SelectNzpKvar2(Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim(),
+                    //                                            Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim().Split('-')[1].Trim().Split(' ')[6].Trim(),
+                    //                                            Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim().Split('-')[2].Trim().Split(' ')[1].Trim(),
+                    //                                     2);
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(comment);
+                    //        pg.InsertPerekidka2(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(7).Value) * (-1), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
+                    //    }
+                    //}
+                    //book.Save();
+                    //book = new XLWorkbook(@"C:\temp\Гастелло 47 (1).xlsx");
+                    //comment = "Корректировка отопления 2015 г.";
+                    //for (int i = 4; i <= 135; i++)
+                    //{
+                    //    List<string> nzp_kvar = pg.SelectNzpKvar2(Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(comment);
+                    //        pg.InsertPerekidka3(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(11).Value), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
+                    //    }
+                    //}
+                    //book.Save();
+                    //book = new XLWorkbook(@"C:\temp\Гастелло 17.2 комф.xlsx");
+                    //comment = "Корректировка отопления 2015 г.";
+                    //for (int i = 4; i <= 139; i++)
+                    //{
+                    //    List<string> nzp_kvar = pg.SelectNzpKvar2(Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(comment);
+                    //        pg.InsertPerekidka3(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(11).Value), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
+                    //    }
+                    //}
+                    //book.Save();
+                    //book = new XLWorkbook(@"C:\temp\Генератор Гастелло 47.3.xlsx");
+                    //comment = "Корректировка отопления 2015 г.";
+                    //for (int i = 4; i <= 115; i++)
+                    //{
+                    //    List<string> nzp_kvar = pg.SelectNzpKvar2(Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(comment);
+                    //        pg.InsertPerekidka3(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(11).Value), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
+                    //    }
+                    //}
+                    //book.Save();
+                    //book = new XLWorkbook(@"C:\temp\SpLsNach_728269186133.xlsx");
+                    //comment = "Перерасчет";
+                    //for (int i = 4; i <= 139; i++)
+                    //{
+                    //    List<string> nzp_kvar = pg.SelectNzpKvar(Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim(),
+                    //                                            Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim().Split('-')[1].Trim().Split(' ')[6].Trim(),
+                    //                                           Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim().Split('-')[2].Trim().Split(' ')[1].Trim(),
+                    //                                     2);
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(comment);
+                    //        pg.InsertPerekidka5(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(4).Value), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
+                    //    }
+                    //}
+                    //book.Save();
+                    //book = new XLWorkbook(@"C:\temp\Реестр с расхождением в датах посчитанный.xlsx");
+                    //comment = "Перерасчет";
+                    //for (int i = 2; i <= 3; i++)
+                    //{
+                    //    List<string> nzp_kvar = pg.SelectNzpKvarPkod(Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim());
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(comment);
+                    //        pg.InsertPerekidka6(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(2).Value), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
+                    //    }
+                    //}
+                    //book.Save();
+                    //book = new XLWorkbook(@"C:\temp\кр.ком 17 б.xlsx");
+                    //comment = "Лифт не работал с 18-31.08";
+                    //for (int i = 4; i <= 114; i++)
+                    //{
+                    //    List<string> nzp_kvar = pg.SelectNzpKvar2(Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
+                    //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(comment);
+                    //        pg.InsertPerekidka7(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(10).Value) * (-1), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
+                    //    }
+                    //}
+                    //book.Save();
+                    //book = new XLWorkbook(@"C:\temp\22Парт1А.xlsx");
+                    //comment = "Не соответствовал температурный режим с 17.09-30.09.2015 г.";
+                    //for (int i = 2; i <= 83; i++)
+                    //{
+                    //    List<string> nzp_kvar = pg.SelectNzpKvarByPkod(Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim());
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase(comment);
+                    //        pg.InsertPerekidka14(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(2).Value) * (-1), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
+                    //    }
+                    //}
+                    //book.Save();
+                    //book = new XLWorkbook(@"C:\temp\Перерасчет 50.xlsx");
+                    //comment = "Перерасчет по ИПУ";
+                    //for (int i = 2; i <= 116; i++)
+                    //{
+                    //    int month = 9;
+                    //    List<string> nzp_kvar = pg.SelectNzpKvarByNumLs("billTlt", Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim().Substring(5));
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        int nzp_doc_base = pg.InsertDocBase("billTlt", Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim() != "26" ? comment : "");
+                    //        pg.InsertPerekidkaByNzpServAndMonthAndSupp("billTlt",
+                    //                                                        Convert.ToInt32(nzp_kvar[0]), 
+                    //                                                            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(3).Value),
+                    //                                                                nzp_doc_base, 
+                    //                                                                    Convert.ToInt32(nzp_kvar[1]),
+                    //                                                                        Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim(),
+                    //                                                                            month,
+                    //                                                                                Convert.ToString(book.Worksheet(1).Row(i).Cell(4).Value).Trim());
+                    //    }
+                    //}
+                    //book.Save();
+
+                    //book = new XLWorkbook(@"C:\temp\Недопоставка за 10.2015 по 22 Парт 1 А по ГВС.xlsx");
+                    //comment = "Несоответствие температурного режима с 1.10.15-11.10.2015 гг";
+                    //for (int i = 10; i <= 103; i++)
+                    //{
+                    //    int month = 10;
+                    //    List<string> nzp_kvar = pg.SelectNzpKvarByNumLs(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(4).Value).Trim());
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        if (book.Worksheet(1).Row(i).Cell(9).Value != "")
+                    //        {
+                    //            int nzp_doc_base = pg.InsertDocBase(database, comment);
+                    //            pg.InsertPerekidkaByNzpServAndMonthAndSupp(database,
+                    //                                                            Convert.ToInt32(nzp_kvar[0]),
+                    //                                                                Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1),
+                    //                                                                    nzp_doc_base,
+                    //                                                                        Convert.ToInt32(nzp_kvar[1]),
+                    //                                                                            "9",
+                    //                                                                                month,
+                    //                                                                                    "101185");
+                    //        }
+                    //    }
+                    //}
+                    //book.Save();
+                    //book = new XLWorkbook(@"C:\temp\Корректировка отопл за 2015 по д.50 правильный.xlsx");
+                    //comment = "Корректировка по отоплению";
+                    //for (int i = 2; i <= 263; i++)
+                    //{
+                    //    int month = 1;
+                    //    int year = 2016;
+                    //    int nzp_dom = 7155107;
+                    //    List<string> nzp_kvar = pg.SelectNzpKvarByPkod10NzpDomNKvar(database,
+                    //        Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(), nzp_dom, bank,
+                    //        Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim());
+
+                    //    if (nzp_kvar == null)
+                    //    {
+                    //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                    //    }
+                    //    else
+                    //    {
+                    //        if (book.Worksheet(1).Row(i).Cell(10).Value != "")
+                    //        {
+                    //            int nzp_doc_base = pg.InsertDocBase(database, comment);
+                    //            pg.InsertPerekidkaByNzpServAndMonthAndSupp(database,
+                    //                                                            Convert.ToInt32(nzp_kvar[0]),
+                    //                                                                Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(10).Value),
+                    //                                                                    nzp_doc_base,
+                    //                                                                        Convert.ToInt32(nzp_kvar[1]),
+                    //                                                                            "8",
+                    //                                                                                month,
+                    //                                                                                    "101191",
+                    //                                                                                        year,
+                    //                                                                                            bank);
+                    //        }
+                    //    }
+                    //}
+                    //book.Save();
                 }
-                book.Save();
-                //book = new XLWorkbook(@"C:\temp\недопоставка Мальцева_10.xlsx");
-                //comment = "лифт не работает";
-                //for (int i = 3; i <= 61; i++)
-                //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvar2(database,
-                //        Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                //        Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                //        Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(database, comment);
-                //        pg.InsertPerekidka(database, Convert.ToInt32(nzp_kvar[0]),
-                //            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(10).Value) * (-1), nzp_doc_base,
-                //            Convert.ToInt32(nzp_kvar[1]),
-                //            17, 101179,
-                //            year + "-" + month + "-11", Convert.ToInt32(month), Convert.ToInt32(year));
-                //    }
-                //}
-                //book.Save();
-                //book = new XLWorkbook(@"C:\temp\кр.ком 17 б.xlsx");
-                //comment = "Лифт не работал с 01.09-20.09.2015";
-                //for (int i = 4; i <= 114; i++)
-                //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvar2(Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                //                                   Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                //                                   Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(comment);
-                //        pg.InsertPerekidka(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
-                //    }
-                //}
-                //book = new XLWorkbook(@"C:\temp\Генератор по Гастелло 47 по начислению ОДН электро.xlsx");
-                //comment = "перерасчет";
-                //for (int i = 4; i <= 135; i++)
-                //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvar2(Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim(),
-                //                                            Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim().Split('-')[1].Trim().Split(' ')[6].Trim(),
-                //                                            Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim().Split('-')[2].Trim().Split(' ')[1].Trim(),
-                //                                     2);
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(comment);
-                //        pg.InsertPerekidka4(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(8).Value) * (-1), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
-                //    }
-                //}
-                //book.Save();
-                //book = new XLWorkbook(@"C:\temp\генератор по Гикам май.xlsx");
-                //comment = "перекидка";
-                //for (int i = 4; i <= 38; i++)
-                //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvar2(Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim(),
-                //                                            Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim().Split('-')[1].Trim().Split(' ')[6].Trim(),
-                //                                            Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim().Split('-')[2].Trim().Split(' ')[1].Trim(),
-                //                                     2);
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(comment);
-                //        pg.InsertPerekidka2(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(7).Value) * (-1), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
-                //    }
-                //}
-                //book.Save();
-                //book = new XLWorkbook(@"C:\temp\Гастелло 47 (1).xlsx");
-                //comment = "Корректировка отопления 2015 г.";
-                //for (int i = 4; i <= 135; i++)
-                //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvar2(Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(comment);
-                //        pg.InsertPerekidka3(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(11).Value), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
-                //    }
-                //}
-                //book.Save();
-                //book = new XLWorkbook(@"C:\temp\Гастелло 17.2 комф.xlsx");
-                //comment = "Корректировка отопления 2015 г.";
-                //for (int i = 4; i <= 139; i++)
-                //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvar2(Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(comment);
-                //        pg.InsertPerekidka3(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(11).Value), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
-                //    }
-                //}
-                //book.Save();
-                //book = new XLWorkbook(@"C:\temp\Генератор Гастелло 47.3.xlsx");
-                //comment = "Корректировка отопления 2015 г.";
-                //for (int i = 4; i <= 115; i++)
-                //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvar2(Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(comment);
-                //        pg.InsertPerekidka3(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(11).Value), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
-                //    }
-                //}
-                //book.Save();
-                //book = new XLWorkbook(@"C:\temp\SpLsNach_728269186133.xlsx");
-                //comment = "Перерасчет";
-                //for (int i = 4; i <= 139; i++)
-                //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvar(Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim(),
-                //                                            Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim().Split('-')[1].Trim().Split(' ')[6].Trim(),
-                //                                           Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim().Split('-')[2].Trim().Split(' ')[1].Trim(),
-                //                                     2);
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(comment);
-                //        pg.InsertPerekidka5(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(4).Value), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
-                //    }
-                //}
-                //book.Save();
-                //book = new XLWorkbook(@"C:\temp\Реестр с расхождением в датах посчитанный.xlsx");
-                //comment = "Перерасчет";
-                //for (int i = 2; i <= 3; i++)
-                //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvarPkod(Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim());
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(comment);
-                //        pg.InsertPerekidka6(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(2).Value), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
-                //    }
-                //}
-                //book.Save();
-                //book = new XLWorkbook(@"C:\temp\кр.ком 17 б.xlsx");
-                //comment = "Лифт не работал с 18-31.08";
-                //for (int i = 4; i <= 114; i++)
-                //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvar2(Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim(),
-                //                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(), 2);
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(comment);
-                //        pg.InsertPerekidka7(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(10).Value) * (-1), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
-                //    }
-                //}
-                //book.Save();
-                //book = new XLWorkbook(@"C:\temp\22Парт1А.xlsx");
-                //comment = "Не соответствовал температурный режим с 17.09-30.09.2015 г.";
-                //for (int i = 2; i <= 83; i++)
-                //{
-                //    List<string> nzp_kvar = pg.SelectNzpKvarByPkod(Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim());
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase(comment);
-                //        pg.InsertPerekidka14(Convert.ToInt32(nzp_kvar[0]), Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(2).Value) * (-1), nzp_doc_base, Convert.ToInt32(nzp_kvar[1]));
-                //    }
-                //}
-                //book.Save();
-                //book = new XLWorkbook(@"C:\temp\Перерасчет 50.xlsx");
-                //comment = "Перерасчет по ИПУ";
-                //for (int i = 2; i <= 116; i++)
-                //{
-                //    int month = 9;
-                //    List<string> nzp_kvar = pg.SelectNzpKvarByNumLs("billTlt", Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim().Substring(5));
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        int nzp_doc_base = pg.InsertDocBase("billTlt", Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim() != "26" ? comment : "");
-                //        pg.InsertPerekidkaByNzpServAndMonthAndSupp("billTlt",
-                //                                                        Convert.ToInt32(nzp_kvar[0]), 
-                //                                                            Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(3).Value),
-                //                                                                nzp_doc_base, 
-                //                                                                    Convert.ToInt32(nzp_kvar[1]),
-                //                                                                        Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim(),
-                //                                                                            month,
-                //                                                                                Convert.ToString(book.Worksheet(1).Row(i).Cell(4).Value).Trim());
-                //    }
-                //}
-                //book.Save();
-
-                //book = new XLWorkbook(@"C:\temp\Недопоставка за 10.2015 по 22 Парт 1 А по ГВС.xlsx");
-                //comment = "Несоответствие температурного режима с 1.10.15-11.10.2015 гг";
-                //for (int i = 10; i <= 103; i++)
-                //{
-                //    int month = 10;
-                //    List<string> nzp_kvar = pg.SelectNzpKvarByNumLs(database, Convert.ToString(book.Worksheet(1).Row(i).Cell(4).Value).Trim());
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        if (book.Worksheet(1).Row(i).Cell(9).Value != "")
-                //        {
-                //            int nzp_doc_base = pg.InsertDocBase(database, comment);
-                //            pg.InsertPerekidkaByNzpServAndMonthAndSupp(database,
-                //                                                            Convert.ToInt32(nzp_kvar[0]),
-                //                                                                Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(9).Value) * (-1),
-                //                                                                    nzp_doc_base,
-                //                                                                        Convert.ToInt32(nzp_kvar[1]),
-                //                                                                            "9",
-                //                                                                                month,
-                //                                                                                    "101185");
-                //        }
-                //    }
-                //}
-                //book.Save();
-                //book = new XLWorkbook(@"C:\temp\Корректировка отопл за 2015 по д.50 правильный.xlsx");
-                //comment = "Корректировка по отоплению";
-                //for (int i = 2; i <= 263; i++)
-                //{
-                //    int month = 1;
-                //    int year = 2016;
-                //    int nzp_dom = 7155107;
-                //    List<string> nzp_kvar = pg.SelectNzpKvarByPkod10NzpDomNKvar(database,
-                //        Convert.ToString(book.Worksheet(1).Row(i).Cell(3).Value).Trim(), nzp_dom, bank,
-                //        Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim());
-
-                //    if (nzp_kvar == null)
-                //    {
-                //        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                //    }
-                //    else
-                //    {
-                //        if (book.Worksheet(1).Row(i).Cell(10).Value != "")
-                //        {
-                //            int nzp_doc_base = pg.InsertDocBase(database, comment);
-                //            pg.InsertPerekidkaByNzpServAndMonthAndSupp(database,
-                //                                                            Convert.ToInt32(nzp_kvar[0]),
-                //                                                                Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(10).Value),
-                //                                                                    nzp_doc_base,
-                //                                                                        Convert.ToInt32(nzp_kvar[1]),
-                //                                                                            "8",
-                //                                                                                month,
-                //                                                                                    "101191",
-                //                                                                                        year,
-                //                                                                                            bank);
-                //        }
-                //    }
-                //}
-                //book.Save();
-            }
             #endregion
 
             #region 69
@@ -5378,289 +2883,15 @@ namespace ConsoleApplication1
             #region 79
             else if (type == 79)
             {
-                FtpClient client = new FtpClient();
-                //Задаём параметры клиента.
-                client.PassiveMode = true; //Включаем пассивный режим.
-                int TimeoutFTP = 30000; //Таймаут.
-                string FTP_SERVER = "ftp.zakupki.gov.ru";
-                //Подключаемся к FTP серверу.
-                client.Connect(TimeoutFTP, FTP_SERVER, 21);
-                client.Login(TimeoutFTP, "free", "free");
-                client.ChangeDirectory(TimeoutFTP, "fcs_regions/Samarskaja_obl/contracts");
-                string pathContract = @"C:\temp\depstr\contracts\incoming";
-                string pathContractExtract = @"C:\temp\depstr\contracts\extract";
-                string pathContractFileLoad = @"C:\temp\depstr\contracts\fileLoad";
-                int un = 0;
-                Directory.SetCurrentDirectory(pathContract);
-                /*if (Directory.Exists(pathContract + @"\" + DateTime.Today.ToShortDateString()))
-                {
-                    Directory.SetCurrentDirectory(pathContract);
-                    Directory.Delete(Directory.GetCurrentDirectory() + @"\" + DateTime.Today.ToShortDateString(), true);
-                    Directory.CreateDirectory(DateTime.Today.ToShortDateString());
-                    Directory.SetCurrentDirectory(pathContract + @"\" + DateTime.Today.ToShortDateString());
-                }
-                else
-                {
-                    Directory.CreateDirectory(DateTime.Today.ToShortDateString());
-                    Directory.SetCurrentDirectory(pathContract + @"\" + DateTime.Today.ToShortDateString());
-                }*/
-                foreach (var t in client.GetDirectoryList(TimeoutFTP))
-                {
-                    if (!File.Exists(Directory.GetCurrentDirectory() + @"\" + t.Name))
-                    {
-                        string file = Directory.GetCurrentDirectory() + @"\" + t.Name;
-                        client.GetFile(TimeoutFTP, file, t.Name);
-                        //C:\Temp\7-Zip
-                        //ZipFile.ExtractToDirectory(file, pathContractExtract);
-                        // Формируем параметры вызова 7z
-                        ProcessStartInfo startInfo = new ProcessStartInfo();
-                        startInfo.FileName = @"C:\Temp\7-Zip\7z.exe";
-                        // Распаковать (для полных путей - x)
-                        startInfo.Arguments = " e";
-                        // На все отвечать yes
-                        startInfo.Arguments += " -y";
-                        // Файл, который нужно распаковать
-                        startInfo.Arguments += " " + "\"" + file + "\"";
-                        // Папка распаковки
-                        startInfo.Arguments += " -o" + "\"" + pathContractExtract + "\"";
-                        startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                        int sevenZipExitCode = 0;
-                        using (Process sevenZip = Process.Start(startInfo))
-                        {
-                            sevenZip.WaitForExit();
-                            sevenZipExitCode = sevenZip.ExitCode;
-                        }
-                        // Если с первого раза не получилось,
-                        //пробуем еще раз через 1 секунду
-                        if (sevenZipExitCode != 0 && sevenZipExitCode != 1)
-                        {
-                            using (Process sevenZip = Process.Start(startInfo))
-                            {
-                                Thread.Sleep(1000);
-                                sevenZip.WaitForExit();
-                                switch (sevenZip.ExitCode)
-                                {
-                                    case 0: return; // Без ошибок и предупреждений
-                                    case 1: return; // Есть некритичные предупреждения
-                                    case 2: throw new Exception("Фатальная ошибка");
-                                    case 7: throw new Exception("Ошибка в командной строке");
-                                    case 8:
-                                    throw new Exception("Недостаточно памяти для выполнения операции");
-                                    case 225:
-                                    throw new Exception("Пользователь отменил выполнение операции");
-                                    default: throw new Exception("Архиватор 7z вернул недокументированный код ошибки: " + sevenZip.ExitCode.ToString());
-                                }
-                            }
-                        }
-                        DirectoryInfo dir = new DirectoryInfo(pathContractExtract);
-                        foreach (var item in dir.GetFiles())
-                        {
-                            bool findInn = false;
-                            bool findKpp = false;
-                            string str = pathContractExtract + @"\" + item.Name;
-                            using (XmlReader reader = XmlReader.Create(str))
-                            {
-                                while (reader.Read())
-                                {
-                                    string tmp = reader.Name;
-                                    if (tmp == "oos:inn" || tmp == "INN")
-                                    {
-                                        if (tmp == "oos:inn")
-                                        {
-                                            reader.ReadStartElement("oos:inn");
-                                            if (reader.ReadString() == "6315700286")
-                                                findInn = true;
-                                            //reader.ReadEndElement();
-                                        }
-                                        else
-                                        {
-                                            reader.ReadStartElement("INN");
-                                            if (reader.ReadString() == "6315700286")
-                                                findInn = true;
-                                            //reader.ReadEndElement();
-                                        }
-                                    }
-                                    if (tmp == "oos:kpp" || tmp == "KPP")
-                                    {
-                                        if (tmp == "oos:kpp")
-                                        {
-                                                reader.ReadStartElement("oos:kpp");
-                                                if (reader.ReadString() == "631501001")
-                                                    findKpp = true;
-                                                //reader.ReadEndElement();
-                                        }
-                                        else
-                                        {
-                                            reader.ReadStartElement("KPP");
-                                            if (reader.ReadString() == "631501001")
-                                                findKpp = true;
-                                            //reader.ReadEndElement();
-                                        }
-                                    }
-                                }
-                            }
-                            if (findKpp && findInn)
-                            {
-                                if (File.Exists(pathContractFileLoad + @"\" + item.Name))
-                                {
-                                    File.Copy(str, pathContractFileLoad + @"\"+ un + item.Name);
-                                    un++;
-                                }
-                                else
-                                    File.Copy(str, pathContractFileLoad + @"\" + item.Name);
-                            }
-                        }
-                        foreach (var item in dir.GetFiles())
-                        {
-                            File.Delete( pathContractExtract + @"\" + item.Name);
-                        }
-                    }
-                }
-                
-
-                client.Disconnect(TimeoutFTP);
+                depstr.LoadDataFromFTP3();
             }
             #endregion
 
-            //ftp connect
+            //Стройка. ftp connect
             #region 80
             else if (type == 80)
             {
-                FtpClient client = new FtpClient();
-                //Задаём параметры клиента.
-                client.PassiveMode = true; //Включаем пассивный режим.
-                int TimeoutFTP = 30000; //Таймаут.
-                string FTP_SERVER = "ftp.zakupki.gov.ru";
-                //Подключаемся к FTP серверу.
-                client.Connect(TimeoutFTP, FTP_SERVER, 21);
-                client.Login(TimeoutFTP, "free", "free");
-                //client.ChangeDirectory(TimeoutFTP, "fcs_regions/Samarskaja_obl/contracts");
-                client.ChangeDirectory(TimeoutFTP, "fcs_regions/Samarskaja_obl/notifications");
-                string lotNumber = "0342300000115000147";
-
-                string pathNotifikation = @"C:\temp\depstr\notifications\incoming";
-
-
-                string pathContract = @"C:\temp\depstr\contracts\incoming";
-                string pathContractExtract = @"C:\temp\depstr\contracts\extract";
-                string pathContractFileLoad = @"C:\temp\depstr\contracts\fileLoad";
-                int un = 0;
-                Directory.SetCurrentDirectory(pathNotifikation);
-                foreach (var t in client.GetDirectoryList(TimeoutFTP))
-                {
-                    if (!File.Exists(Directory.GetCurrentDirectory() + @"\" + t.Name) && t.Name.Substring(t.Name.Length - 3) == "zip")
-                    {
-                        string file = Directory.GetCurrentDirectory() + @"\" + t.Name;
-                        client.GetFile(TimeoutFTP, file, t.Name);
-                        //C:\Temp\7-Zip
-                        //ZipFile.ExtractToDirectory(file, pathContractExtract);
-                        // Формируем параметры вызова 7z
-                        ProcessStartInfo startInfo = new ProcessStartInfo();
-                        startInfo.FileName = @"C:\Temp\7-Zip\7z.exe";
-                        // Распаковать (для полных путей - x)
-                        startInfo.Arguments = " e";
-                        // На все отвечать yes
-                        startInfo.Arguments += " -y";
-                        // Файл, который нужно распаковать
-                        startInfo.Arguments += " " + "\"" + file + "\"";
-                        // Папка распаковки
-                        startInfo.Arguments += " -o" + "\"" + pathContractExtract + "\"";
-                        startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                        int sevenZipExitCode = 0;
-                        using (Process sevenZip = Process.Start(startInfo))
-                        {
-                            sevenZip.WaitForExit();
-                            sevenZipExitCode = sevenZip.ExitCode;
-                        }
-                        // Если с первого раза не получилось,
-                        //пробуем еще раз через 1 секунду
-                        if (sevenZipExitCode != 0 && sevenZipExitCode != 1)
-                        {
-                            using (Process sevenZip = Process.Start(startInfo))
-                            {
-                                Thread.Sleep(1000);
-                                sevenZip.WaitForExit();
-                                switch (sevenZip.ExitCode)
-                                {
-                                    case 0: return; // Без ошибок и предупреждений
-                                    case 1: return; // Есть некритичные предупреждения
-                                    case 2: throw new Exception("Фатальная ошибка");
-                                    case 7: throw new Exception("Ошибка в командной строке");
-                                    case 8:
-                                        throw new Exception("Недостаточно памяти для выполнения операции");
-                                    case 225:
-                                        throw new Exception("Пользователь отменил выполнение операции");
-                                    default: throw new Exception("Архиватор 7z вернул недокументированный код ошибки: " + sevenZip.ExitCode.ToString());
-                                }
-                            }
-                        }
-                        DirectoryInfo dir = new DirectoryInfo(pathContractExtract);
-                        foreach (var item in dir.GetFiles())
-                        {
-                            bool findInn = false;
-                            bool findKpp = false;
-                            string str = pathContractExtract + @"\" + item.Name;
-                            using (XmlReader reader = XmlReader.Create(str))
-                            {
-                                while (reader.Read())
-                                {
-                                    string tmp = reader.Name;
-                                    if (tmp == "oos:inn" || tmp == "INN")
-                                    {
-                                        if (tmp == "oos:inn")
-                                        {
-                                            reader.ReadStartElement("oos:inn");
-                                            if (reader.ReadString() == "6315700286")
-                                                findInn = true;
-                                            //reader.ReadEndElement();
-                                        }
-                                        else
-                                        {
-                                            reader.ReadStartElement("INN");
-                                            if (reader.ReadString() == "6315700286")
-                                                findInn = true;
-                                            //reader.ReadEndElement();
-                                        }
-                                    }
-                                    if (tmp == "oos:kpp" || tmp == "KPP")
-                                    {
-                                        if (tmp == "oos:kpp")
-                                        {
-                                            reader.ReadStartElement("oos:kpp");
-                                            if (reader.ReadString() == "631501001")
-                                                findKpp = true;
-                                            //reader.ReadEndElement();
-                                        }
-                                        else
-                                        {
-                                            reader.ReadStartElement("KPP");
-                                            if (reader.ReadString() == "631501001")
-                                                findKpp = true;
-                                            //reader.ReadEndElement();
-                                        }
-                                    }
-                                }
-                            }
-                            if (findKpp && findInn)
-                            {
-                                if (File.Exists(pathContractFileLoad + @"\" + item.Name))
-                                {
-                                    File.Copy(str, pathContractFileLoad + @"\" + un + item.Name);
-                                    un++;
-                                }
-                                else
-                                    File.Copy(str, pathContractFileLoad + @"\" + item.Name);
-                            }
-                        }
-                        foreach (var item in dir.GetFiles())
-                        {
-                            File.Delete(pathContractExtract + @"\" + item.Name);
-                        }
-                    }
-                }
-
-
-                client.Disconnect(TimeoutFTP);
+                depstr.LoadDataFromFTP2();        
             }
             #endregion
 
@@ -6233,136 +3464,11 @@ namespace ConsoleApplication1
             }
             #endregion
 
-            //согрузка ПС КАРТОТЕКА
+            //Стройка. Загрузка с FTP
             #region 91
             else if (type == 91)
             {
-                StreamWriter sw = new StreamWriter(@"C:\temp\depstr\error.log", false);
-                string lotNumber = "";
-                FtpClient client = new FtpClient();
-                //Задаём параметры клиента.
-                client.PassiveMode = true; //Включаем пассивный режим.
-                int TimeoutFTP = 30000; //Таймаут.
-                string FTP_SERVER = "ftp.zakupki.gov.ru";
-                //Подключаемся к FTP серверу.
-                client.Connect(TimeoutFTP, FTP_SERVER, 21);
-                client.Login(TimeoutFTP, "free", "free");
-                string pathContracts = @"C:\temp\depstr\contracts\incoming";
-                string pathContractsExtract = @"C:\temp\depstr\contracts\extract";
-                string pathContractsFileLoad = @"C:\temp\depstr\contracts\fileLoad";
-                DirectoryInfo dirIncoming3 = new DirectoryInfo(pathContracts);
-                int un = 0;
-                
-                client.ChangeDirectory(TimeoutFTP, "fcs_regions/Samarskaja_obl/contracts");
-                Directory.SetCurrentDirectory(pathContracts);
-                foreach (var t in client.GetDirectoryList(TimeoutFTP))
-                {
-                    if (t.Name.Substring(t.Name.Length - 3) == "zip" && (t.Name.Contains("2015") || t.Name.Contains("2014"))
-                            && !System.IO.File.Exists(Directory.GetCurrentDirectory() + @"\" + t.Name))
-                    {
-                        string file = Directory.GetCurrentDirectory() + @"\" + t.Name;
-                        try
-                        {
-                            client.GetFile(TimeoutFTP, file, t.Name);
-                        }
-                        catch
-                        {
-                            System.IO.File.Delete(file);
-                        }
-                    }
-                }
-                client.Disconnect(TimeoutFTP);
-
-                DirectoryInfo dirExtract3 = new DirectoryInfo(pathContractsExtract);
-                foreach (var item in dirExtract3.GetFiles())
-                {
-                    System.IO.File.Delete(pathContractsExtract + @"\" + item.Name);
-                }
-                try
-                {
-                    for (int i = 0; i < 1; i++)
-                    {
-                        lotNumber = "0142300024514000027";
-                        foreach (var items in dirIncoming3.GetFiles())
-                        {
-
-                            //sw.WriteLine("file= " + pathNotifikation + @"\" + items.Name);
-                            string file = pathContracts + @"\" + items.Name;
-                            //C:\Temp\7-Zip
-                            //ZipFile.ExtractToDirectory(file, pathContractExtract);
-                            // Формируем параметры вызова 7z
-                            ProcessStartInfo startInfo = new ProcessStartInfo();
-                            startInfo.FileName = @"C:\Temp\7-Zip\7z.exe";
-                            // Распаковать (для полных путей - x)
-                            startInfo.Arguments = " e";
-                            // На все отвечать yes
-                            startInfo.Arguments += " -y";
-                            // Файл, который нужно распаковать
-                            startInfo.Arguments += " " + "\"" + file + "\"";
-                            // Папка распаковки
-                            startInfo.Arguments += " -o" + "\"" + pathContractsExtract + "\"";
-                            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                            int sevenZipExitCode = 0;
-                            using (Process sevenZip = Process.Start(startInfo))
-                            {
-                                sevenZip.WaitForExit();
-                                sevenZipExitCode = sevenZip.ExitCode;
-                            }
-                            // Если с первого раза не получилось,
-                            //пробуем еще раз через 1 секунду
-                            if (sevenZipExitCode != 0 && sevenZipExitCode != 1)
-                            {
-                                using (Process sevenZip = Process.Start(startInfo))
-                                {
-                                    Thread.Sleep(1000);
-                                    sevenZip.WaitForExit();
-                                }
-                            }
-
-                            foreach (var item in dirExtract3.GetFiles())
-                            {
-                                try
-                                {
-                                    if (!item.Name.Contains("Notificati;liujluijlion"))
-                                    {
-                                        bool isWrite = false;
-                                        string str = pathContractsExtract + @"\" + item.Name;
-                                        if (item.Name.Contains("0142300024514000027"))
-                                            isWrite = true;
-
-
-                                        if (isWrite)
-                                        {
-                                            if (System.IO.File.Exists(pathContractsFileLoad + @"\" + item.Name))
-                                            {
-                                                System.IO.File.Copy(str, pathContractsFileLoad + @"\" + un + item.Name);
-                                                un++;
-                                            }
-                                            else
-                                                System.IO.File.Copy(str, pathContractsFileLoad + @"\" + item.Name);
-                                        }
-                                    }
-                                }
-                                catch (Exception e)
-                                {
-                                    sw.WriteLine(e.ToString());
-                                    continue;
-                                }
-                            }
-                            foreach (var item in dirExtract3.GetFiles())
-                            {
-                                System.IO.File.Delete(pathContractsExtract + @"\" + item.Name);
-                            }
-
-                        }
-                        
-                    }
-                }
-                catch (Exception e)
-                {
-                    sw.WriteLine(e.ToString());
-                }
-                sw.Close();
+                depstr.LoadDataFromFTP();
             }
             #endregion
 
@@ -6720,7 +3826,7 @@ namespace ConsoleApplication1
                 string database = Console.ReadLine();
                 for (int i = 2; i <= 93; i++)
                 {
-                    string kvar = pg.SelectNzpKvarByKvarDom(database, wb2.Worksheet(1).Row(i).Cell(1).Value.ToString(), 7155108);
+                    string kvar = billBaseDb.SelectNzpKvarByKvarDom(database, wb2.Worksheet(1).Row(i).Cell(1).Value.ToString(), 7155108);
                     string nzp_kvar = "";
                     if (kvar.Split('|')[1] == "Найдено")
                     {
@@ -8408,230 +5514,12 @@ namespace ConsoleApplication1
             }
             #endregion
 
-            //Сальдо по пени
+            //Загрузка ПС Картотека
             #region 116
             else if (type == 116)
             {
-                Console.Write("Введите наименование БД:");
-                string database = Console.ReadLine();
-                var book = new XLWorkbook(@"C:\Temp\Реестр паспортиста по 7Просека 94.xlsx");
-                string address = "";
-                Int32 nzp_serv;
-                Int32 nzp_supp;
-                String nkvar = "";
-                String nzp_kvar = "";
-                List<string> kvarParams = new List<string>();
-                List<string> doubleKvars = new List<string>();
-                Boolean svid = false;
-                for (int i = 35; i <= 84; i++)
-                {
-                    if (nkvar != Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim() && Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim() != "")
-                    {
-                        nzp_kvar = pg.SelectNzpKvarByKvarDom("billAuk",
-                            Convert.ToString(book.Worksheet(1).Row(i).Cell(2).Value).Trim(), 7155105);
-                        svid = true;
-                    }
-                    else
-                    {
-                        svid = false;
-                    }
-                    if (nzp_kvar.Split('|')[0] == "0")
-                    {
-                        book.Worksheet(1).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
-                        book.Worksheet(1).Row(i).Cell(21).Value = nzp_kvar.Split('|')[1];
-                    }
-                    else
-                    {
-                        int nzp_gil = pg.InsertGil(database);
-                        int nzp_rod = 0;
-                        #region nzp_rod
-                        switch (Convert.ToString(book.Worksheet(1).Row(i).Cell(4).Value).Trim())
-                        {
-                            case "брат":
-                                {
-                                    nzp_rod = 587;
-                                    break;
-                                }
-                            case "внук":
-                                {
-                                    nzp_rod = 560;
-                                    break;
-                                }
-                            case "внучка":
-                                {
-                                    nzp_rod = 568;
-                                    break;
-                                }
-                            case "гр.муж":
-                                {
-                                    nzp_rod = 571;
-                                    break;
-                                }
-                            case "двоюродн.":
-                                {
-                                    nzp_rod = 15;
-                                    break;
-                                }
-                            case "дочь":
-                                {
-                                    nzp_rod = 559;
-                                    break;
-                                }
-                            case "дядя":
-                                {
-                                    nzp_rod = 738;
-                                    break;
-                                }
-                            case "жена":
-                                {
-                                    nzp_rod = 562;
-                                    break;
-                                }
-                            case "зять":
-                                {
-                                    nzp_rod = 565;
-                                    break;
-                                }
-                            case "кс":
-                                {
-                                    nzp_rod = 561;
-                                    break;
-                                }
-                            case "мать":
-                                {
-                                    nzp_rod = 563;
-                                    break;
-                                }
-                            case "мать мужа":
-                                {
-                                    nzp_rod = 619;
-                                    break;
-                                }
-                            case "муж":
-                                {
-                                    nzp_rod = 567;
-                                    break;
-                                }
-                            case "отец":
-                                {
-                                    nzp_rod = 572;
-                                    break;
-                                }
-                            case "отчим":
-                                {
-                                    nzp_rod = 640;
-                                    break;
-                                }
-                            case "падчерица":
-                                {
-                                    nzp_rod = 30;
-                                    break;
-                                }
-                            case "племянник":
-                                {
-                                    nzp_rod = 666;
-                                    break;
-                                }
-                            case "племянница":
-                                {
-                                    nzp_rod = 899;
-                                    break;
-                                }
-                            case "сестра":
-                                {
-                                    nzp_rod = 899;
-                                    break;
-                                }
-                            case "сноха":
-                                {
-                                    nzp_rod = 575;
-                                    break;
-                                }
-                            case "сын":
-                                {
-                                    nzp_rod = 564;
-                                    break;
-                                }
-                            case "сын жены":
-                                {
-                                    nzp_rod = 1156;
-                                    break;
-                                }
-                            case "тетя":
-                                {
-                                    nzp_rod = 596;
-                                    break;
-                                }
-                            case "теща":
-                                {
-                                    nzp_rod = 594;
-                                    break;
-                                }
-                            case "собств":
-                            case "собств.":
-                                {
-                                    nzp_rod = 582;
-                                    break;
-                                }
-                        }
-                        #endregion
-                        //int nzp_dok = 0;
-                        //#region nzp_dok
-                        //switch (Convert.ToString(book.Worksheet(1).Row(i).Cell(10).Value).Trim())
-                        //{
-                        //    case "паспорт":
-                        //        {
-                        //            nzp_dok = 10;
-                        //            break;
-                        //        }
-                        //    case "Св-во о рожд.":
-                        //        {
-                        //            nzp_dok = 2;
-                        //            break;
-                        //        }
-                        //    case "Св-во о рождении":
-                        //        {
-                        //            nzp_dok = 2;
-                        //            break;
-                        //        }
-                        //    case "Св-во рожд.":
-                        //        {
-                        //            nzp_dok = 2;
-                        //            break;
-                        //        }
-                        //    default:
-                        //        {
-                        //            nzp_dok = -1;
-                        //            break;
-                        //        }
-                        //}
-                        //#endregion
-
-                        //string serij = "";
-                        //if (Convert.ToString(book.Worksheet(1).Row(i).Cell(11).Value).Trim() != "" && Convert.ToString(book.Worksheet(1).Row(i).Cell(11).Value).Trim().Length >= 4)
-                        //{
-                        //    if (nzp_dok == 10)
-                        //        serij = Convert.ToString(book.Worksheet(1).Row(i).Cell(11).Value).Trim().Substring(0, 2) + " " + Convert.ToString(book.Worksheet(1).Row(i).Cell(11).Value).Trim().Substring(2, 2);
-                        //    else
-                        //        serij = Convert.ToString(book.Worksheet(1).Row(i).Cell(11).Value).Trim();
-                        //}
-                        if (Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim().ToUpper() != "")
-                        {
-                            int nzp_kart = pg.InsertKart("billAuk", nzp_gil, nzp_kvar.Split('|')[0],
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim().ToUpper().Split(' ')[0],
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim().ToUpper().Split(' ')[1],
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(5).Value).Trim().ToUpper().Split(' ')[2],
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(6).Value).Trim(),
-                                                    "",
-                                                    (svid) ? Convert.ToString(book.Worksheet(1).Row(i + 1).Cell(10).Value).Trim() : "",
-                                                    nzp_rod,
-                                                    Convert.ToString(book.Worksheet(1).Row(i).Cell(4).Value).Trim());
-                            pg.InsertGrgd(nzp_kart);
-                        }
-                        
-                    }
-                }
-                book.Save();
+                BillKart billKart = new BillKart();
+                billKart.LoadKart2();
             }
             #endregion
 
@@ -8639,104 +5527,32 @@ namespace ConsoleApplication1
             #region 1000 Формирование оплат для NCC
             else if (type == 1000)
             {
-                Int32 year = 2016;
-                Int32 month = 2;
-                var wb2 = new XLWorkbook(@"C:\temp\ЕИРЦ_Пачки\NCC_Out_num.xlsx");
-                int num = Convert.ToInt32(wb2.Worksheet(1).Row(1).Cell(1).Value) + 1;
-                wb2.Worksheet(1).Row(1).Cell(1).Value = num;
-                wb2.Save();
-                StreamWriter outPack = new StreamWriter(@"C:\Temp\ЕИРЦ_Пачки\ncc_out.txt", false, Encoding.GetEncoding("cp866"));
-                outPack.WriteLine("<smpay_load_hdr><format_id>smpay_load_data</format_id><format_version>1</format_version><file_id>" + num + "</file_id></smpay_load_hdr>");
-                List<string> prefs = new List<string>() {"bill01", "bill02"};
-                DataTable dt = pg.SelectSaldoForNCC(year, month, prefs);
-                for (int i = 0; i < dt.Rows.Count; i++)
-                {
-                    const string uniqNumOrg = "00103198";
-                    string id = uniqNumOrg + Convert.ToString(dt.Rows[i][0]).PadRight(20, ' ');
-                    string address = Convert.ToString(dt.Rows[i][1]).PadRight(40, ' ');
-                    decimal d = Math.Round(Convert.ToDecimal(dt.Rows[i][2]), 2);
-                    int saldo = Convert.ToInt32(d * 100) > 0 ? Convert.ToInt32(d * 100) : 0;
-                    outPack.WriteLine(id + address + saldo.ToString().PadLeft(12, '0'));
-                    //outPack.WriteLine(id + address);
-                }
-                outPack.Close();
+                BillPack bp = new BillPack();
+                bp.NccPack();
             }
             #endregion
 
-            #region 1100 Формирование оплат для NCC
+            #region 1100 Формирование оплат для Дымка
             else if (type == 1100)
             {
-                Int32 year = 2016;
-                Int32 month = 2;
-                StreamWriter outPack = new StreamWriter(@"C:\Temp\dymok.csv", false, Encoding.UTF8);
-                List<string> prefs = new List<string>() { "bill01", "bill02" };
-                DataTable dt = pg.SelectSaldoForAvtovazbank(year, month, prefs);
-                for (int i = 0; i < dt.Rows.Count; i++)
-                {
-                    string eirc = Convert.ToString(dt.Rows[i][4]);
-                    string id = Convert.ToString(dt.Rows[i][0]);
-                    string address = Convert.ToString(dt.Rows[i][1]);
-                    string d = Math.Round(Convert.ToDecimal(dt.Rows[i][2]) > 0 ? Convert.ToDecimal(dt.Rows[i][2]) : 0, 2).ToString().Replace(',','.');
-                    string fio = Convert.ToString(dt.Rows[i][3]);
-                    string[] objsObj = fio.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries);
-                    fio = "";
-                    foreach (string word in objsObj.ToList<string>())
-                    {
-                        if (fio != "")
-                        {
-                            fio = fio + word.Substring(0, 1) + ". ";
-                        }
-                        else
-                        {
-                            fio = word.Substring(0, 1) + ". ";
-                        }
-                    }
-                    outPack.WriteLine(eirc + id + ";" + address + ";" + d + ";" + fio);
-                }
-                outPack.Close();
+                BillPack bp = new BillPack();
+                bp.DymokPack();
             }
             #endregion
 
             #region 1200 Формирование оплат для Сбербанка
             else if (type == 1200)
             {
-                String fileName = "6321388192_40702810754400005587_001_y01";
-                StreamWriter outPack = new StreamWriter(@"C:\Temp\" + fileName + ".txt", false, Encoding.GetEncoding("windows-1251"));
-                string db = "192.168.1.25";
-                List<string> prefs = new List<string>() { "bill01", "bill02" };
-                DataTable dt = pg.SelectSaldoForSberbank(db, 2, 2016, prefs);
-                for (int i = 0; i < dt.Rows.Count; i++)
-                {
-                    string num_ls = Convert.ToString(dt.Rows[i][0]).PadLeft(6, '0');
-                    string fio = Convert.ToString(dt.Rows[i][1]);
-                    string address = Convert.ToString(dt.Rows[i][2]);
-                    string period = Convert.ToString(dt.Rows[i][3]);
-                    string d = Math.Round(Convert.ToDecimal(dt.Rows[i][4]), 2) >= 0 ? Math.Round(Convert.ToDecimal(dt.Rows[i][4]), 2).ToString().Replace(',', '.') : "0";
-
-                    outPack.WriteLine(num_ls + ";" + fio + ";" + address + ";" + period + ";" + d);
-                }
-                outPack.Close();
+                BillPack bp = new BillPack();
+                bp.SberbankPack();
             }
             #endregion
 
-            #region 1300 Формирование оплат для NCC
+            #region 1300 Формирование оплат для Автовазбанк
             else if (type == 1300)
             {
-                Int32 year = 2016;
-                Int32 month = 2;
-                StreamWriter outPack = new StreamWriter(@"C:\Temp\avtovazbank.csv", false, Encoding.UTF8);
-                List<string> prefs = new List<string>() { "bill01", "bill02" };
-                DataTable dt = pg.SelectSaldoForAvtovazbank2(year, month, prefs);
-                for (int i = 0; i < dt.Rows.Count; i++)
-                {
-                    string id = Convert.ToString(dt.Rows[i][0]);
-                    string address = Convert.ToString(dt.Rows[i][1]);
-                    string fio = Convert.ToString(dt.Rows[i][3]);
-                    string d = Math.Round(Convert.ToDecimal(dt.Rows[i][2]) > 0 ? Convert.ToDecimal(dt.Rows[i][2]) : 0, 2).ToString().Replace(',', '.');
-                    
-                    outPack.WriteLine(id + ";" + address + ";" + fio + ";" + d);
-                }
-                outPack.Close();
+                BillPack bp = new BillPack();
+                bp.AvtovazbankPack();
             }
             #endregion
             #endregion
@@ -9002,68 +5818,16 @@ namespace ConsoleApplication1
             #region 120 Сумма по двум эксель файлам
             else if (type == 120)
             {
-                Dictionary<string, string> workBooks = new Dictionary<string, string>();
-                workBooks.Add("Макс_итог_плюсом", "Макс (3)");
-                workBooks.Add("Согласие_итог_плюсом", "Согласие");
-                workBooks.Add("УралСиб_итог_плюсом(2)", "УралСиб (5)");
-                foreach (KeyValuePair<string, string> books in workBooks)
-                {
-                    Console.WriteLine("Обрабатывается книга: " + books.Key);
-                    var wb1 = new XLWorkbook(@"C:\Temp\" + books.Key + ".xlsx");
-                    var wb2 = new XLWorkbook(@"C:\Temp\" + books.Value + ".xlsx");
-
-                    for (int i = 11; i <= 179; i++)//18953
-                    {
-                        for (int j = 11; j <= 179; j++)//18953
-                        {
-                            if (Convert.ToString(wb1.Worksheet(1).Row(i).Cell(1).Value).Trim() ==
-                                Convert.ToString(wb2.Worksheet(1).Row(j).Cell(1).Value).Trim())
-                            {
-                                for (int k = 3; k <= 78; k++)
-                                {
-                                    if (k <= 66 && k >= 59)
-                                    {
-                                            Decimal d1 = Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(k).Value);
-                                            Decimal d2 = Convert.ToDecimal(wb2.Worksheet(1).Row(j).Cell(k).Value);
-                                            Decimal res = d1 + d2;
-                                            wb1.Worksheet(1).Row(i).Cell(k).Value = res;                                       
-                                    }
-
-                                }
-                                break;
-                            }
-
-                        }
-                    }
-                    wb1.Save();
-                    wb2.Save();
-                    Console.WriteLine("Сохранена книга: " + books.Key);
-                }
-                
+                ExcelOperation exelOperation = new ExcelOperation();
+                exelOperation.Sum2File();              
             }
             #endregion
 
             #region 121 Делим значения на 2 в Эксель
             else if (type == 121)
             {
-                var wb1 = new XLWorkbook(@"C:\Temp\Согласие_итог_плюсом.xlsx");
-
-                for (int i = 11; i <= 179; i++)//18953
-                {
-                       
-                    for (int k = 3; k <= 52; k++)
-                    {
-                        if (k == 4 || k == 6 || k == 10 || k == 12 || k == 16 || k == 18 || k == 24 || k == 26 || k == 30 || k == 32 || k == 36 || k == 38 || k == 44 || k == 46 || k == 50 || k == 52)
-                        {
-                            Decimal d1 = Convert.ToDecimal(wb1.Worksheet(1).Row(i).Cell(k).Value);
-                            Decimal res = d1 / 2;
-                            wb1.Worksheet(1).Row(i).Cell(k).Value = res;
-                        }
-
-                    }
-                }
-                wb1.Save();
-
+                ExcelOperation exelOperation = new ExcelOperation();
+                exelOperation.DevideByTwo();
             }
             #endregion
 
@@ -9281,14 +6045,10 @@ namespace ConsoleApplication1
             }
             #endregion
 
-            #region 127
+            #region 127 Тест Convert.ToDecimal()
             else if (type == 127)
             {
-                //DateTime dt1 = Convert.ToDateTime("2015-01-01");
-                //DateTime dt2 = Convert.ToDateTime("2015-12-31");
-                //var nMonth = (int) dt2.Subtract(dt1).TotalDays;
                 Decimal d1 = Convert.ToDecimal("0,00");
-
                 Console.WriteLine(d1);
             }
             #endregion
@@ -9864,6 +6624,83 @@ namespace ConsoleApplication1
             }
             #endregion
 
+            #region 135 Проставка и замена ezhkh_code
+            else if (type == 135)
+            {
+                Dictionary<int, string> районыСловарь = new Dictionary<int, string>();
+                районыСловарь.Add(21654, "52");
+                районыСловарь.Add(21655, "53");
+                районыСловарь.Add(21656, "54");
+                районыСловарь.Add(21657, "55");
+                районыСловарь.Add(21658, "56");
+                районыСловарь.Add(21659, "57");
+                районыСловарь.Add(21660, "58");
+                районыСловарь.Add(21661, "59");
+                районыСловарь.Add(21662, "60");
+                районыСловарь.Add(21663, "61");
+                районыСловарь.Add(21664, "62");
+                районыСловарь.Add(21665, "63");
+                районыСловарь.Add(21666, "64");
+                районыСловарь.Add(21667, "65");
+                районыСловарь.Add(21668, "66");
+                районыСловарь.Add(21669, "67");
+                районыСловарь.Add(21670, "68");
+                районыСловарь.Add(21671, "69");
+                районыСловарь.Add(21672, "70");
+                районыСловарь.Add(21673, "71");
+                районыСловарь.Add(21674, "72");
+                районыСловарь.Add(21675, "73");
+                районыСловарь.Add(21676, "74");
+                районыСловарь.Add(21677, "75");
+                районыСловарь.Add(21678, "76");
+                районыСловарь.Add(21679, "77");
+                районыСловарь.Add(21680, "78");
+                районыСловарь.Add(21682, "80");
+                районыСловарь.Add(21683, "81");
+                районыСловарь.Add(21684, "82");
+                районыСловарь.Add(21685, "83");
+                районыСловарь.Add(21686, "84");
+                районыСловарь.Add(21687, "85");
+                районыСловарь.Add(21688, "86");
+                районыСловарь.Add(21689, "87");
+                районыСловарь.Add(21690, "88");
+                районыСловарь.Add(21691, "89");
+                районыСловарь.Add(21692, "90");
+                районыСловарь.Add(21693, "91");
+                районыСловарь.Add(21694, "92");
+                районыСловарь.Add(21695, "93");
+                районыСловарь.Add(21696, "94");
+                районыСловарь.Add(21697, "94");
+                районыСловарь.Add(21698, "96");
+                районыСловарь.Add(21699, "97");
+                районыСловарь.Add(21700, "98");
+                районыСловарь.Add(21701, "99");
+                районыСловарь.Add(21702, "93");
+                районыСловарь.Add(21681, "97");
+
+                DataTable dt = pg.GetAllGkhCode();
+                //int tempCode = 900;
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    string gkhCode = dt.Rows[i][0].ToString();
+
+                    DataTable houseForUpdate = pg.GetHousesByGkhCode(gkhCode);
+                    for (int j = 0; j < houseForUpdate.Rows.Count; j++)
+                    {
+                        if (gkhCode != "" && j == 0)
+                            continue;
+                        int id = Convert.ToInt32(houseForUpdate.Rows[j][0].ToString());
+                        int minicipalityId = Convert.ToInt32(houseForUpdate.Rows[j][1].ToString());
+                        if (minicipalityId == 21703)
+                            continue;
+                        int newGkhCode = pg.GetMaxGkhCodeByMunId(minicipalityId, районыСловарь[minicipalityId]);
+                        pg.UpdateGkhCode(id, newGkhCode);
+                        //tempCode++;
+                    }
+                }
+            }
+            #endregion
+
             #region 995
             else if (type == 995)
             {
@@ -9965,60 +6802,3 @@ namespace ConsoleApplication1
         }
     }   
 }
-
-
-
-/*if (dtHouse.Rows[i][2] != null && dtHouse.Rows[i][2].ToString() != "")
-                            {
-                                for (int j = 0; j < dtNorm.Rows.Count; j++)
-                                {
-                                    if (dtHouse.Rows[i][1].ToString() == dtNorm.Rows[j][0].ToString() && dtHouse.Rows[i][2].ToString() == dtNorm.Rows[j][2].ToString())
-                                    {
-                                        ws.Cell(rows, 1).Value = dtHouse.Rows[i][0].ToString();
-                                        string str = "";
-                                        str = Convert2(dtNorm.Rows[j][1].ToString(), Encoding.GetEncoding(1251), Encoding.Default);
-                                        ws.Cell(rows, 2).Value = str;
-                                        //ws.Cell(i + 1, 2).Value = dtNormTemp.Rows[i][1].ToString();
-                                        ws.Cell(rows, 3).Value = dtNorm.Rows[j][3].ToString();
-                                        kHouse.Add(dtHouse.Rows[i][0].ToString());
-                                        rows++;
-                                        break;
-                                    }
-                                }
-                            }
-                            else if (dtHouse.Rows[i][3] != null && dtHouse.Rows[i][3].ToString() != "")
-                            {
-                                for (int j = 0; j < dtNorm.Rows.Count; j++)
-                                {
-                                    if (dtHouse.Rows[i][1].ToString() == dtNorm.Rows[j][0].ToString() && dtHouse.Rows[i][3].ToString() == dtNorm.Rows[j][2].ToString())
-                                    {
-                                        ws.Cell(rows, 1).Value = dtHouse.Rows[i][0].ToString();
-                                        string str = "";
-                                        str = Convert2(dtNorm.Rows[j][1].ToString(), Encoding.GetEncoding(1251), Encoding.Default);
-                                        ws.Cell(rows, 2).Value = str;
-                                        //ws.Cell(i + 1, 2).Value = dtNormTemp.Rows[i][1].ToString();
-                                        ws.Cell(rows, 3).Value = dtNorm.Rows[j][3].ToString();
-                                        kHouse.Add(dtHouse.Rows[i][0].ToString());
-                                        rows++;
-                                        break;
-                                    }
-                                }
-                            }
-                            else if (dtHouse.Rows[i][4] != null && dtHouse.Rows[i][4].ToString() != "")
-                            {
-                                for (int j = 0; j < dtNorm.Rows.Count; j++)
-                                {
-                                    if (dtHouse.Rows[i][1].ToString() == dtNorm.Rows[j][0].ToString() && dtHouse.Rows[i][4].ToString() == dtNorm.Rows[j][2].ToString())
-                                    {
-                                        ws.Cell(rows, 1).Value = dtHouse.Rows[i][0].ToString();
-                                        string str = "";
-                                        str = Convert2(dtNorm.Rows[j][1].ToString(), Encoding.GetEncoding(1251), Encoding.Default);
-                                        ws.Cell(rows, 2).Value = str;
-                                        //ws.Cell(i + 1, 2).Value = dtNormTemp.Rows[i][1].ToString();
-                                        ws.Cell(rows, 3).Value = dtNorm.Rows[j][3].ToString();
-                                        kHouse.Add(dtHouse.Rows[i][0].ToString());
-                                        rows++;
-                                        break;
-                                    }
-                                }
-                            }*/
