@@ -120,6 +120,7 @@
     <Compile Include="Database\BillKartDb.cs" />
     <Compile Include="Database\BillPackDb.cs" />
     <Compile Include="Database\BillUploadDataDb.cs" />
+    <Compile Include="Database\EzhkhBaseDb.cs" />
     <Compile Include="Database\EzhkhInsertDataDb.cs" />
     <Compile Include="Database\GetRoIdentifier.cs" />
     <Compile Include="Database\InsertPeopleDb.cs" />

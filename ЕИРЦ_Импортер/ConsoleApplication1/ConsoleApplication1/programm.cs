@@ -75,6 +75,7 @@ namespace ConsoleApplication1
             Dbf dbf = new Dbf();
             pg pg = new pg();
             BillBaseDb billBaseDb = new BillBaseDb();
+            EzhkhBaseDb ezhkhBaseDb = new EzhkhBaseDb();
             InsertPeople ipProg = new InsertPeople();
             Depstr depstr = new Depstr();
             int type;
@@ -157,14 +158,66 @@ namespace ConsoleApplication1
             #region 7 Free
             else if (type == 7)
             {
-                
+                WebRequest request = WebRequest.Create("http://85.140.61.250/GkhService/Service1.svc/GetDataCSV?token=f8f84d10cc6727b20becb7c5e85de047");
+                request.Method = "GET";
+                WebResponse response = request.GetResponse();
+
             }
             #endregion
 
             #region 8 Free
             else if (type == 8)
             {
-                
+                Dictionary<string, Int32> month = new Dictionary<string, Int32>();
+                month.Add("январь", 1);
+                month.Add("февраль", 2);
+                month.Add("март", 3);
+                month.Add("апрель", 4);
+                month.Add("май", 5);
+                month.Add("июнь", 6);
+                month.Add("июль", 7);
+                month.Add("август", 8);
+                month.Add("сентябрь", 9);
+                month.Add("октябрь", 10);
+                month.Add("ноябрь", 11);
+                month.Add("декабрь", 12);
+                List<Int32> clearHouse = new List<Int32>();
+                var wb2 = new XLWorkbook(@"C:\temp\ЭЖКХ 1 квартал ЖКС 2016.xlsx");
+                for (int i = 3; i <= 6; i++)
+                {
+                    if (Convert.ToString(wb2.Worksheet(2).Row(i).Cell(1).Value) != "")
+                    {
+                        Int32 roId = ezhkhBaseDb.SelectRoIDByGkhCode(Convert.ToString(wb2.Worksheet(2).Row(i).Cell(1).Value));
+                        if (roId == 0 || roId == 2)
+                        {
+                            wb2.Worksheet(2).Row(i).Cell(11).Value = roId;
+                            wb2.Worksheet(2).Row(i).Style.Fill.BackgroundColor = XLColor.Yellow;
+                            continue;
+                        }                         
+                        if (!clearHouse.Contains(roId))
+                        {
+                            clearHouse.Add(roId);
+                            ezhkhBaseDb.DelCurRepair(roId);
+                        }
+                        List<string> repId = ezhkhBaseDb.SelectCurRepWorkId(Convert.ToString(wb2.Worksheet(2).Row(i).Cell(2).Value));
+                        if(repId == null)
+                        {
+                            wb2.Worksheet(2).Row(i).Style.Fill.BackgroundColor = XLColor.Red;
+                            continue;
+                        }
+                        String planDate = month.ContainsKey(Convert.ToString(wb2.Worksheet(2).Row(i).Cell(3).Value))
+                            ? "2016-" + month[Convert.ToString(wb2.Worksheet(2).Row(i).Cell(3).Value)] + "-01" : "";
+                        String planWork = Convert.ToString(wb2.Worksheet(2).Row(i).Cell(4).Value) == "" ? "0" : Convert.ToString(wb2.Worksheet(2).Row(i).Cell(4).Value).Replace(",",".");
+                        String planSum = Convert.ToString(wb2.Worksheet(2).Row(i).Cell(6).Value) == "" ? "0" : Convert.ToString(wb2.Worksheet(2).Row(i).Cell(6).Value).Replace(",", ".");
+
+                        String factDate = month.ContainsKey(Convert.ToString(wb2.Worksheet(2).Row(i).Cell(7).Value))
+                            ? "2016-" + month[Convert.ToString(wb2.Worksheet(2).Row(i).Cell(7).Value)] + "-01" : "";
+                        String factWork = Convert.ToString(wb2.Worksheet(2).Row(i).Cell(8).Value) == "" ? "0" : Convert.ToString(wb2.Worksheet(2).Row(i).Cell(8).Value).Replace(",", ".");
+                        String factSum = Convert.ToString(wb2.Worksheet(2).Row(i).Cell(10).Value) == "" ? "0" : Convert.ToString(wb2.Worksheet(2).Row(i).Cell(10).Value).Replace(",", ".");
+
+                        ezhkhBaseDb.InsertCurRepair(roId, factDate, factSum, factWork, planDate, planSum, planWork, repId[1], repId[0]);
+                    }
+                }
             }
             #endregion
 
@@ -2798,8 +2851,6 @@ namespace ConsoleApplication1
                 }
             }
             #endregion
-
-
 
             #region 77
             else if (type == 77)
