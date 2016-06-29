@@ -125,11 +125,13 @@
     <Compile Include="Database\GetRoIdentifier.cs" />
     <Compile Include="Database\InsertPeopleDb.cs" />
     <Compile Include="Dbf.cs" />
+    <Compile Include="mainCode\BillInsertData.cs" />
     <Compile Include="mainCode\BillKart.cs" />
     <Compile Include="mainCode\BillPack.cs" />
     <Compile Include="mainCode\BillUploadData.cs" />
     <Compile Include="mainCode\Depstr.cs" />
     <Compile Include="mainCode\ExcelOperation.cs" />
+    <Compile Include="mainCode\EzhkhReport.cs" />
     <Compile Include="mainCode\EzhkhInsertData.cs" />
     <Compile Include="mainCode\InsertPeople.cs" />
     <Compile Include="Ora.cs" />

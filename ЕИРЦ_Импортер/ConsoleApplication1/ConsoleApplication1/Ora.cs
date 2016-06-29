@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Data;
 using System.Data.OracleClient;
-
+using System.IO;
 
 namespace ConsoleApplication9
 {
@@ -13,6 +13,7 @@ namespace ConsoleApplication9
         private string connStr;
         private string connStrTest;
         private string connStrHome;
+        private string connStrBlob;
         public Ora()
         {
             //connStr = "Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.126.128)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=XE)));User Id = HR; Password = test";
@@ -21,9 +22,16 @@ namespace ConsoleApplication9
             connStr = "Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=85.140.61.250)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=ezhkh)));User Id = b4_gkh_samara; Password = ACTANONVERBA";
             connStrTest = "Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=85.140.61.250)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=ezhkh)));User Id = b4_gkh_samara2; Password = ACTANONVERBA";
             connStrHome = "Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=46.0.13.2)(PORT=1578))(CONNECT_DATA=(SID=orcl)));User Id=dbq;Password=dbq";
+            connStrBlob = "Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=85.140.61.250)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=ezhkh)));User Id = blob; Password = ACTANONVERBA";
         }
 
         public List<string> houses = new List<string>();
+
+        public void InsertBlob()
+        {
+            
+        }
+
 
         public DataTable TestHome()
         {
