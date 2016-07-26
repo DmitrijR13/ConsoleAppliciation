@@ -141,5 +141,65 @@ namespace ConsoleApplication1.Database
             }
             
         }
+
+        public string UpdatePhysicalWear(string gkh_code, decimal value)
+        {
+            connStr = "Server=85.140.61.250;Database=gkh_samara;User ID=bars;Password=md5SM3tv;CommandTimeout=180000;";
+            string cmdText = "UPDATE gkh_reality_object SET physical_wear = " + value + " where gkh_code = '" + gkh_code + "'";
+            NpgsqlConnection conn = new NpgsqlConnection(connStr);
+            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
+            conn.Open();
+            try
+            {
+                cmd.ExecuteNonQuery();
+                return "ЗАГРУЖЕНО";
+            }
+            catch (Exception e)
+            {
+                string err = e.Message;
+                return err;
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+        }
+
+        public string UpdatePhysicalWearTehPassport(string gkh_code, decimal value)
+        {
+            connStr = "Server=85.140.61.250;Database=gkh_samara;User ID=bars;Password=md5SM3tv;CommandTimeout=180000;";
+            string cmdText = @"UPDATE tp_teh_passport_value set value = '"+ value + 
+                @"'WHERE form_code = 'Form_1' and cell_code = '20:1' and teh_passport_id in 
+                    (SELECT id FROM tp_teh_passport where reality_obj_id in (SELECT id FROM gkh_reality_object where  gkh_code = '"+ gkh_code + "'))";
+            NpgsqlConnection conn = new NpgsqlConnection(connStr);
+            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
+            conn.Open();
+            try
+            {
+                int i = cmd.ExecuteNonQuery();
+                if(i == 0)
+                {
+                    cmdText = @"INSERT INTO tp_teh_passport_value(object_version, object_create_date, object_edit_date, teh_passport_id, form_code, cell_code, value)
+                                SELECT 0, current_date, current_date, id, 'Form_1', '20:1', '"+ value + 
+                                "' FROM tp_teh_passport where reality_obj_id in (SELECT id FROM gkh_reality_object where  gkh_code = '"+ gkh_code + "')";
+                    cmd = new NpgsqlCommand(cmdText, conn);
+                    i = cmd.ExecuteNonQuery();
+                    return "ЗАГРУЖЕНО|" + i;
+                }
+                    
+                return "ЗАГРУЖЕНО|" + i;
+            }
+            catch (Exception e)
+            {
+                string err = e.Message;
+                return "НЕЗАГРУЖЕНО|" + err;
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+        }
     }
 }

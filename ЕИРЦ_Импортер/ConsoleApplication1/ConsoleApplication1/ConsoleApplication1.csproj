@@ -117,6 +117,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Database\BillBaseDb.cs" />
+    <Compile Include="Database\BillInsertDataDb.cs" />
     <Compile Include="Database\BillKartDb.cs" />
     <Compile Include="Database\BillPackDb.cs" />
     <Compile Include="Database\BillUploadDataDb.cs" />

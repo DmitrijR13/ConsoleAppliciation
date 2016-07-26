@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using ConsoleApplication1.Database;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -1230,6 +1231,27 @@ namespace ConsoleApplication1.mainCode
                 }
             }
             wb2.Save();
+        }
+
+        public void UpdateKvarTotalSquare()
+        {
+            List<string> prefs = new List<string>();
+            prefs.Add("bill01");
+            Console.Write("Введите наименование БД:");
+            string database = Console.ReadLine();
+            var wbPrmName = new XLWorkbook(@"C:\temp\kommunal итог ОКОНЧАТЕЛЬНЫЙ (именно этот файл загружаем на АУК).xlsx");
+            BillInsertDataDb billInsertDataDb = new BillInsertDataDb(database);
+            for (int i = 2; i <= 1293; i++)
+            {
+                if (Convert.ToString(wbPrmName.Worksheet(1).Row(i).Cell(10).Value) != "")
+                {
+                    List<string> nzp = pg.SelectNzpKvarByPkod(Convert.ToString(wbPrmName.Worksheet(1).Row(i).Cell(5).Value).Trim(), database);
+                    if(nzp != null)
+                        billInsertDataDb.UpdateKvarTotalSquare(Convert.ToString(wbPrmName.Worksheet(1).Row(i).Cell(10).Value).Trim(), nzp[0]);
+                }
+            }
+            wbPrmName.Save();
+
         }
     }
 }

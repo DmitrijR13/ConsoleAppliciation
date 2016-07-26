@@ -82,29 +82,7 @@ namespace ConsoleApplication1
             InsertPeopleDb insPeopleDb = new InsertPeopleDb();
             Depstr depstr = new Depstr();
             int type;
-            Console.WriteLine("0 = Запись из эксельки: на вход только exhkh_code");
-            Console.WriteLine("1 = Запись из эксельки:поставщик, житель, дом на основе ezhkh_code");
-            Console.WriteLine("2 = Создание списка домов house.xlsx из Сервера");
-            Console.WriteLine("3 = Билинг. Сверка домов из билинга с СЕРВЕРОМ");
-            Console.WriteLine("4 = Билинг. Список нормативов");
-            Console.WriteLine("5 = Билинг. Сопоставление кодов");
-            Console.WriteLine("6 = Билинг. Количество домов по коду");
-            Console.WriteLine("7 = Билинг");
-            Console.WriteLine("8 = Билинг. Проставление название улицы");
-            Console.WriteLine("9 = Билинг. Проверка штрих кода");
-            Console.WriteLine("10 = Билинг. Дома из dbf");
-            Console.WriteLine("11 = Формирование INSERT");
-            Console.WriteLine("12 = Биллинг. Перерасчеты");
-            Console.WriteLine("13 = Биллинг. Перерасчеты_2");
-            Console.WriteLine("14 = Биллинг. Перерасчеты_3. Excel с кодами");
-            Console.WriteLine("27 = Проставить ezhkh_code в Excel на основании другого файла");
-            Console.WriteLine("41 = ЭЖКХ. Формирование Excel файла по текущему ремонту");
-            Console.WriteLine("54 = ЭЖКХ. Перенос собственников по одному дому со SPLIT-ом по квартире");
-            Console.WriteLine("44 = ЭЖКХ. Отчет по проценту заполнения домов");
-            Console.WriteLine("55 = ЭЖКХ. Поставщики коммунальных услуг с добавление дома");
-            Console.WriteLine("60 = Биллинг. Групповой ввод харакетритсик жилья");
-            Console.WriteLine("68 = Биллинг. Перекидка");
-            Console.WriteLine("71 = Стройка. Загрузка Договоров");
+            Console.WriteLine("17 = Акты из ЖКХ в шаблон Эксель");
             Console.Write("Введите тип операции:");
             type = Convert.ToInt32(Console.ReadLine());
 
@@ -525,14 +503,29 @@ namespace ConsoleApplication1
             #region 16 Free
             else if (type == 16)
             {
-                
+                EzhkhInsertDataDb ezhkhInsertDataDb = new EzhkhInsertDataDb();
+                var book = new XLWorkbook(@"C:\temp\Копия Капитальный ремонт мкд.xlsx");
+                for (int i = 1; i <= 373; i++)
+                {
+                    string str = ezhkhInsertDataDb.UpdatePhysicalWearTehPassport(Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim(),
+                        Convert.ToDecimal(book.Worksheet(1).Row(i).Cell(2).Value));
+                    if (str.Split('|')[0] != "ЗАГРУЖЕНО")
+                        Console.WriteLine(str);
+                    else
+                    {
+                        if(str.Split('|')[1] == "0")
+                            Console.WriteLine(Convert.ToString(book.Worksheet(1).Row(i).Cell(1).Value).Trim() + " = " + str.Split('|')[1]);
+                    }
+                }
+                book.Save();
             }
             #endregion
 
-            #region 17 Free
+            #region 17 Акты из ЖКХ в шаблон Эксель
             else if (type == 17)
             {
-               
+                EzhkhReport ezhkhReport = new EzhkhReport();
+                ezhkhReport.RepActcheck();
             }
             #endregion
 
@@ -983,76 +976,122 @@ namespace ConsoleApplication1
             #region 58
             else if (type == 58)
             {
-                var wb2 = new XLWorkbook(@"C:\temp\!БАЗА для загрузки.xlsx");
+                Console.Write("Введите наименование БД:");
+                string database = Console.ReadLine();
+                var wb2 = new XLWorkbook(@"C:\temp\Копия Первомайская 7-загрузить.xlsx");
                 string[] stringSeparators = new string[] { "в." };
-                string ul = "";
+                string[] stringSeparatorsUl = new string[] { ", ул." };
+                string[] stringSeparatorsDom = new string[] { ", д." };
+                string address = "";
                 int nzp_ul = 0;
                 string dom = "";
                 int nzp_dom = 0;
-                for (int i = 2; i <= 822; i++)
+                Dictionary<string, string> addHouses = new Dictionary<string, string>();
+                for (int i = 2; i <= 20; i++)
                 {
-                    if (ul != Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value).Trim())
+                    if (address != Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value).Trim())
                     {
-                        ul = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value).Trim();
-                        string temp = pg.SelectNzpUl(ul);
-                        if (temp.Split('|')[0] == "0")
+                        address = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value).Trim();
+
+                        string rajon = pg.SelectNzpRaj(database, address.Trim().Split(stringSeparatorsUl, StringSplitOptions.None)[0].ToUpper());
+                        if (rajon.Split('|')[0] == "0")
                         {
-                            Console.WriteLine(ul + ": " + temp.Split('|')[1]);
+                            Console.WriteLine(address + ": " + rajon.Split('|')[1]);
+                            nzp_dom = 0;
                         }
                         else
                         {
-                            nzp_ul = Convert.ToInt32(temp.Split('|')[0]);
-                            Console.WriteLine(ul + ": " + nzp_ul);
-                            dom = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Trim();
-                            nzp_dom = pg.InsertDom(nzp_ul, dom);
-                            Console.WriteLine(dom + ": " + nzp_dom);
+                            string ulica = pg.SelectNzpUl(database, 
+                                address.Trim().Split(stringSeparatorsUl, StringSplitOptions.None)[1].Split(stringSeparatorsDom, StringSplitOptions.None)[0].ToUpper().Trim(), 
+                                rajon.Split('|')[0]);
+                            if (ulica.Split('|')[0] == "0")
+                            {
+                                Console.WriteLine(address + ": " + ulica.Split('|')[1]);
+                                nzp_dom = 0;
+                            }
+                            else
+                            {
+                                nzp_ul = Convert.ToInt32(ulica.Split('|')[0]);
+                                Console.WriteLine(address + ": " + nzp_ul);
+                                dom = Convert.ToString(address.Trim().Split(stringSeparatorsUl, StringSplitOptions.None)[1].Split(stringSeparatorsDom, StringSplitOptions.None)[1]).Trim().ToUpper();
+                                nzp_dom = pg.InsertDom(database, nzp_ul, dom);
+
+                                Console.WriteLine(address + ": " + nzp_dom);
+                                for (int j = 2; j <= 37; j++)
+                                {
+                                    if(Convert.ToString(wb2.Worksheet(2).Row(j).Cell(1).Value).Trim() == address)
+                                    {
+                                        if(Convert.ToString(wb2.Worksheet(2).Row(j).Cell(2).Value).Trim() != "")
+                                            pg.InsertDomPrm(database, nzp_dom, Convert.ToString(wb2.Worksheet(2).Row(j).Cell(2).Value).Trim(), 40);
+                                        if (Convert.ToString(wb2.Worksheet(2).Row(j).Cell(3).Value).Trim() != "")
+                                            pg.InsertDomPrm(database, nzp_dom, Convert.ToString(wb2.Worksheet(2).Row(j).Cell(3).Value).Trim(), 150);
+                                        if (Convert.ToString(wb2.Worksheet(2).Row(j).Cell(4).Value).Trim() != "")
+                                            pg.InsertDomPrm(database, nzp_dom, Convert.ToString(wb2.Worksheet(2).Row(j).Cell(4).Value).Trim(), 37);
+                                        if (Convert.ToString(wb2.Worksheet(2).Row(j).Cell(5).Value).Trim() != "")
+                                            pg.InsertDomPrm(database, nzp_dom, Convert.ToString(wb2.Worksheet(2).Row(j).Cell(5).Value).Trim(), 2049);
+                                        break;
+                                    }
+                                        
+                                }
+                            }
                         }
+                        
                     }
-                    if (dom != Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Trim())
+                    /*if (dom != Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Trim())
                     {
                         dom = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Trim();
                         nzp_dom = pg.InsertDom(nzp_ul, dom);
                         Console.WriteLine(dom + ": " + nzp_dom);
-                    }
+                    }*/
                     string nkvar = "";
-                    if(Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value).Trim().Substring(0,3) == "Кв.")
-                        nkvar = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value).Trim().Split(stringSeparators, StringSplitOptions.None)[1].Trim();
-                    else
-                        nkvar =Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value).Trim();
-                    int num_ls = 0;
-                    int number;
-                    int subLs = 0;
-                    string num_ls_full = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value).Trim().Split('№')[1].Trim();
-                    for (int j = 0; j < num_ls_full.Length; j++)
-                    {
-                        if (Int32.TryParse(num_ls_full.Substring(j, 1), out number))
-                            subLs++;
-                        else
-                            break;
-                    }
-                    if(subLs > 0)
-                        num_ls = Convert.ToInt32(num_ls_full.Substring(0, subLs));
+                    //if(Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value).Trim().Substring(0,3) == "Кв.")
+                    nkvar = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Trim();
+                    //else
+                     //   nkvar =Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value).Trim();
+                    //int num_ls = 0;
+                    //int number;
+                    //int subLs = 0;
+                    //string num_ls_full = Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value).Trim().Split('№')[1].Trim();
+                    //for (int j = 0; j < num_ls_full.Length; j++)
+                    //{
+                    //    if (Int32.TryParse(num_ls_full.Substring(j, 1), out number))
+                    //        subLs++;
+                    //    else
+                    //        break;
+                    //}
+                    //if(subLs > 0)
+                    //    num_ls = Convert.ToInt32(num_ls_full.Substring(0, subLs));
 
-                    int ikvar = 0;
-                    int subKvar = 0;
-                    for (int j = 0; j < nkvar.Length; j++)
+                    //int ikvar = 0;
+                    //int subKvar = 0;
+                    //for (int j = 0; j < nkvar.Length; j++)
+                    //{
+                    //    if (Int32.TryParse(nkvar.Substring(j, 1), out number))
+                    //        subKvar++;
+                    //    else
+                    //        break;
+                    //}
+                    //if (subKvar > 0)
+                    //    ikvar = Convert.ToInt32(nkvar.Substring(0, subKvar));
+                    if(nzp_dom != 0)
                     {
-                        if (Int32.TryParse(nkvar.Substring(j, 1), out number))
-                            subKvar++;
-                        else
-                            break;
-                    }
-                    if (subKvar > 0)
-                        ikvar = Convert.ToInt32(nkvar.Substring(0, subKvar));
-
-                    int nzp_kvar = pg.InsertKvar(nzp_dom, nkvar, num_ls, Convert.ToString(wb2.Worksheet(1).Row(i).Cell(5).Value).Trim(), ikvar);
-                    pg.InsertDateOpen(nzp_kvar, Convert.ToString(wb2.Worksheet(1).Row(i).Cell(6).Value).Trim());
-                    if (wb2.Worksheet(1).Row(i).Cell(7).Value != null && Convert.ToString(wb2.Worksheet(1).Row(i).Cell(7).Value).Trim() != "")
-                        pg.InsertPrm1(nzp_kvar, Convert.ToString(wb2.Worksheet(1).Row(i).Cell(7).Value).Trim(), 4);
-                    if (wb2.Worksheet(1).Row(i).Cell(8).Value != null && Convert.ToString(wb2.Worksheet(1).Row(i).Cell(8).Value).Trim() != "")
-                        pg.InsertPrm1(nzp_kvar, Convert.ToString(wb2.Worksheet(1).Row(i).Cell(8).Value).Trim(), 6);
-                    if (wb2.Worksheet(1).Row(i).Cell(9).Value != null && Convert.ToString(wb2.Worksheet(1).Row(i).Cell(9).Value).Trim() != "")
-                        pg.InsertPrm1(nzp_kvar, Convert.ToString(wb2.Worksheet(1).Row(i).Cell(9).Value).Trim(), 5);
+                        int nzp_kvar = pg.InsertKvar(database, nzp_dom.ToString(), Convert.ToString(wb2.Worksheet(1).Row(i).Cell(7).Value).Trim(), nkvar);
+                        Console.WriteLine(address + ", кв. " + nkvar + ": " + nzp_kvar);
+                        pg.InsertDateOpen(database, nzp_kvar, "01.07.2016");
+                        if (wb2.Worksheet(1).Row(i).Cell(3).Value != null && Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value).Trim() != "")
+                            pg.InsertPrm1(database, nzp_kvar, Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value).Trim(), 4);
+                        if (wb2.Worksheet(1).Row(i).Cell(4).Value != null && Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value).Trim() != "")
+                            pg.InsertPrm1(database, nzp_kvar, Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value).Trim(), 6);
+                        if (wb2.Worksheet(1).Row(i).Cell(5).Value != null && Convert.ToString(wb2.Worksheet(1).Row(i).Cell(5).Value).Trim() != "")
+                            pg.InsertPrm1(database, nzp_kvar, Convert.ToString(wb2.Worksheet(1).Row(i).Cell(5).Value).Trim(), 5);
+                        if (wb2.Worksheet(1).Row(i).Cell(6).Value != null && Convert.ToString(wb2.Worksheet(1).Row(i).Cell(6).Value).Trim() != "")
+                        {
+                            if (Convert.ToString(wb2.Worksheet(1).Row(i).Cell(6).Value).Trim() == "Да")
+                                pg.InsertPrm1(database, nzp_kvar, "1", 8);
+                            else if (Convert.ToString(wb2.Worksheet(1).Row(i).Cell(6).Value).Trim() == "Нет")
+                                pg.InsertPrm1(database, nzp_kvar, "0", 8);
+                        }
+                    }     
                 }
             }
             #endregion
@@ -1959,6 +1998,7 @@ namespace ConsoleApplication1
             }
             #endregion
 
+            //Стройка. ftp connect
             #region 83
             else if (type == 83)
             {
@@ -2079,12 +2119,12 @@ namespace ConsoleApplication1
                         try
                         {
                             string str = insPeopleDb.InsertPeople5(item.Name.Split('.')[0],
-                                Convert.ToInt32(wb2.Worksheet(1).Row(i).Cell(1).Value),
+                                Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Trim(),
                                 Convert.ToString(wb2.Worksheet(1).Row(i).Cell(3).Value).Trim(),
                                 "",
+                                Convert.ToString(wb2.Worksheet(1).Row(i).Cell(4).Value).Trim(),
                                 "",
-                                "",
-                                Convert.ToString(wb2.Worksheet(1).Row(i).Cell(2).Value).Trim());
+                                Convert.ToString(wb2.Worksheet(1).Row(i).Cell(1).Value).Trim());
                             if (str != "ЗАГРУЖЕНО")
                                 Console.WriteLine(wb2.Worksheet(1).Row(i).Cell(1).Value + ":" + str);
                         }
@@ -2311,10 +2351,12 @@ namespace ConsoleApplication1
             }
             #endregion
 
-            #region 105 Free
+            //Обновление площадей по ЛС
+            #region 105 UpdateKvarTotalSquare
             else if (type == 105)
             {
-
+                BillInsertData billInsertData = new BillInsertData();
+                billInsertData.UpdateKvarTotalSquare();
             }
             #endregion
 

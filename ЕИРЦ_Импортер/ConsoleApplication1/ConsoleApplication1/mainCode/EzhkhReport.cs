@@ -257,7 +257,7 @@ namespace ConsoleApplication1.mainCode
             wb.Save();
         }
 
-        public void RepCurRepair ()
+        public void RepCurRepair()
         {
             string inn = "";
             Console.Write("Введите инн управляющей организации:");
@@ -836,6 +836,45 @@ namespace ConsoleApplication1.mainCode
             }
 
             wb.SaveAs(@"C:\temp\EzhkhImport_" + month + "_" + year + ".xlsx");
+        }
+
+        public void RepActcheck()
+        {
+            DataTable obj = pg.SelectActcheckInfo();
+            var wb = new XLWorkbook(@"C:\temp\Копия Result2017OF.UL.IP.xlsx");
+            string address = "";
+            string municipality = "";
+            int rowMove = 44;
+            int colNum = 0;
+            wb.Worksheet(1).Row(10).Cell(5).SetValue("161050630000565115");
+            wb.Worksheet(1).Row(12).Cell(5).SetValue(obj.Rows[0][0] != null ? obj.Rows[0][0].ToString() : "");
+            wb.Worksheet(1).Row(14).Cell(5).SetValue(@"12:00");
+            wb.Worksheet(1).Row(16).Cell(5).Value = obj.Rows[0][1] != null ? obj.Rows[0][1].ToString() : "";
+            wb.Worksheet(1).Row(18).Cell(5).SetValue(obj.Rows[0][0] != null ? obj.Rows[0][0].ToString() : "");
+            wb.Worksheet(1).Row(20).Cell(5).SetValue(@"12:00");
+            wb.Worksheet(1).Row(22).Cell(5).Value = "1";
+            Int32 minutes1 = obj.Rows[0][3] != null && obj.Rows[0][3].ToString() != "" ? Convert.ToInt32(obj.Rows[0][3].ToString().Split(':')[0]) * 60 + Convert.ToInt32(obj.Rows[0][3].ToString().Split(':')[1]) : 0;
+            Int32 minutes2 = obj.Rows[0][4] != null && obj.Rows[0][4].ToString() != "" ? Convert.ToInt32(obj.Rows[0][4].ToString().Split(':')[0]) * 60 + Convert.ToInt32(obj.Rows[0][4].ToString().Split(':')[1]) : 0;
+            Decimal minutes3 = minutes2 - minutes1;
+            String minutes4 = Math.Round(minutes3 / 60, 0) + "";
+            wb.Worksheet(1).Row(24).Cell(5).Value = minutes3 > 0 ? minutes4 : "1";
+            wb.Worksheet(1).Row(26).Cell(5).Value = obj.Rows[0][1] != null ? obj.Rows[0][1].ToString() : "";
+            wb.Worksheet(1).Row(28).Cell(5).Value = obj.Rows[0][5] != null ? obj.Rows[0][5].ToString() : "";
+            for (int i = 0; i < obj.Rows.Count; i++)
+            {
+                rowMove++;
+                colNum++;
+                wb.Worksheet(1).Row(rowMove).Cell(2).Value = colNum;
+                wb.Worksheet(1).Row(rowMove).Cell(3).SetValue(obj.Rows[i][6] != null ? obj.Rows[i][6].ToString() : "");
+                wb.Worksheet(1).Row(rowMove).Cell(4).SetValue(obj.Rows[i][7] != null ? obj.Rows[i][7].ToString() : "");
+                wb.Worksheet(1).Row(rowMove).Cell(6).SetValue(obj.Rows[i][8] != null ? obj.Rows[i][8].ToString() : "");
+                if(obj.Rows[i][8] != null && obj.Rows[i][8].ToString() != "")
+                    wb.Worksheet(1).Row(rowMove).Cell(7).SetValue(obj.Rows[i][6] != null ? obj.Rows[i][6].ToString() : "");
+                wb.Worksheet(1).Row(rowMove).Cell(8).SetValue(obj.Rows[i][9] != null ? obj.Rows[i][9].ToString() : "");
+                wb.Worksheet(1).Row(rowMove).Cell(9).SetValue(obj.Rows[i][10] != null ? obj.Rows[i][10].ToString() : "");
+                wb.Worksheet(1).Row(rowMove).Cell(10).SetValue(obj.Rows[i][11] != null ? obj.Rows[i][11].ToString() : "");
+            }
+            wb.SaveAs(@"C:\temp\161050630000565115.xls");
         }
     }
 }

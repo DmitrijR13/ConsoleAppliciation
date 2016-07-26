@@ -253,6 +253,32 @@ where upper(ul.ulicareg || ' ' || ul.ulica || '  д.' || d.ndom) = upper('" + ad
             
         }
 
+        public int InsertKvar(String database, String nzp_dom, String fio, String nkvar)
+        {
+            string connStr = "Server=192.168.1.25;Database="+ database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
+            string cmdText = "INSERT INTO fbill_data.kvar(nzp_area, nzp_geu, nzp_dom, nkvar, nkvar_n, fio, ikvar, typek, pref, is_open, nzp_wp, area_code) " +
+                "values(2, 2, " + nzp_dom + ", '" + nkvar + "', '-', '" + fio + "', " + nkvar + ", 1, 'bill01', 1, 25, 40124) returning nzp_kvar";
+            NpgsqlConnection conn = new NpgsqlConnection(connStr);
+            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
+            conn.Open();
+            int nzp_kvar = Convert.ToInt32(cmd.ExecuteScalar());
+            cmdText = "INSERT INTO bill01_data.kvar(nzp_kvar, nzp_area, nzp_geu, nzp_dom, nkvar, nkvar_n, fio, ikvar, typek) " +
+                "values(" + nzp_kvar + ", 2, 2, " + nzp_dom + ", '" + nkvar + "', '-', '" + fio + "', " + nkvar + ", 1) returning nzp_kvar";
+            cmd = new NpgsqlCommand(cmdText, conn);
+            cmd.ExecuteNonQuery();
+
+            cmdText = "UPDATE fbill_data.kvar set num_ls = " + nzp_kvar + " WHERE nzp_kvar = " + nzp_kvar;
+            cmd = new NpgsqlCommand(cmdText, conn);
+            cmd.ExecuteNonQuery();
+
+            cmdText = "UPDATE bill01_data.kvar set num_ls = " + nzp_kvar + " WHERE nzp_kvar = " + nzp_kvar;
+            cmd = new NpgsqlCommand(cmdText, conn);
+            cmd.ExecuteNonQuery();
+
+            conn.Close();
+            return nzp_kvar;
+        }
+
         public void InsertTarif(string database, int nzp_serv, int nzp_measure, string name_frm, string name_prm, string dat_s, string dat_po,
             string val_prm, List<string> prefs, string is_actual, string nzp_frm_typ, string nzp_frm_typrs, string nzp_prm_rash, string nzp_prm_rash1)
         {
@@ -996,9 +1022,9 @@ where upper(ul.ulicareg || ' ' || ul.ulica || '  д.' || d.ndom) = upper('" + ad
             }
         }
 
-        public string SelectNzpUl(string ul)
+        public string SelectNzpUl(string database, string ul)
         {
-            string connStr = "Server=192.168.1.25;Database=billAuk;User ID=postgres;Password=Admin;CommandTimeout=180000;";
+            string connStr = "Server=192.168.1.25;Database="+ database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
             string cmdText = "SELECT * FROM bill01_data.s_ulica where ulica LIKE upper('"+ul+"%') AND nzp_raj = 311005102";
             NpgsqlConnection conn = new NpgsqlConnection(connStr);
             NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
@@ -1011,6 +1037,58 @@ where upper(ul.ulicareg || ' ' || ul.ulica || '  д.' || d.ndom) = upper('" + ad
                 if (dt.Rows.Count != 1)
                 {
                     return "0" + "|Найдено больше или меньше 1-ой улицы";
+                }
+                else
+                {
+                    return dt.Rows[0][0].ToString() + "|Найдено";
+                }
+            }
+            catch (Exception e)
+            {
+                return "0" + "|" + e.ToString();
+            }
+        }
+
+        public string SelectNzpUl(string database, string ul, string nzp_raj)
+        {
+            string connStr = "Server=192.168.1.25;Database="+database+";User ID=postgres;Password=Admin;CommandTimeout=180000;";
+            string cmdText = "SELECT * FROM bill01_data.s_ulica where ulica LIKE upper('" + ul + "%') AND nzp_raj = " + nzp_raj;
+            NpgsqlConnection conn = new NpgsqlConnection(connStr);
+            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
+            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            try
+            {
+                da.Fill(dt);
+                if (dt.Rows.Count != 1)
+                {
+                    return "0" + "|Найдено больше или меньше 1-ой улицы";
+                }
+                else
+                {
+                    return dt.Rows[0][0].ToString() + "|Найдено";
+                }
+            }
+            catch (Exception e)
+            {
+                return "0" + "|" + e.ToString();
+            }
+        }
+
+        public string SelectNzpRaj(string database, string rajon)
+        {
+            string connStr = "Server=192.168.1.25;Database="+database+";User ID=postgres;Password=Admin;CommandTimeout=180000;";
+            string cmdText = "SELECT * FROM bill01_data.s_rajon where rajon LIKE upper('" + rajon + "%') AND nzp_town = 104677";
+            NpgsqlConnection conn = new NpgsqlConnection(connStr);
+            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
+            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            try
+            {
+                da.Fill(dt);
+                if (dt.Rows.Count != 1)
+                {
+                    return "0" + "|Найдено больше или меньше 1-ой района";
                 }
                 else
                 {
@@ -1184,17 +1262,19 @@ where upper(ul.ulicareg || ' ' || ul.ulica || '  д.' || d.ndom) = upper('" + ad
             conn.Close();
         }
 
-        public int InsertDom(int nzp_ul, string dom)
+        public int InsertDom(string database, int nzp_ul, string dom)
         {
-            string connStr = "Server=192.168.1.25;Database=billAuk;User ID=postgres;Password=Admin;CommandTimeout=180000;";
+            string connStr = "Server=192.168.1.25;Database="+ database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
             string cmdText = "INSERT INTO fbill_data.dom(nzp_land, nzp_stat, nzp_town, nzp_raj, nzp_ul, nzp_area, nzp_geu, idom, ndom, nkor, nzp_wp, pref) " +
-                "values(1, 104259, 310001035, -1, " + nzp_ul + ", 2, 2, '" + dom.Replace('А', ' ').Trim() + "', '" + dom + "', '-', 25, 'bill01') returning nzp_dom";
+                "values(1, 104259, 104677, -1, " + nzp_ul + ", 2, 2, '" + dom.Replace(@"/Б", " ").Replace('Б', ' ').Replace('А',' ').Replace('Г', ' ').Replace('Д', ' ').Trim() 
+                + "', '" + dom + "', '-', 25, 'bill01') returning nzp_dom";
             NpgsqlConnection conn = new NpgsqlConnection(connStr);
             NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
             conn.Open();
             int nzp_dom = Convert.ToInt32(cmd.ExecuteScalar());
             cmdText = "INSERT INTO bill01_data.dom(nzp_dom, nzp_land, nzp_stat, nzp_town, nzp_raj, nzp_ul, nzp_area, nzp_geu, idom, ndom, nkor) " +
-                "values(" + nzp_dom + ", 1, 104259, 310001035, -1, " + nzp_ul + ", 2, 2, '" + dom.Replace('А', ' ').Trim() + "', '" + dom + "', '-')";
+                "values(" + nzp_dom + ", 1, 104259, 104677, -1, " + nzp_ul + ", 2, 2, '" + dom.Replace(@"/Б", " ").Replace('Б', ' ').Replace('А', ' ').Replace('Г', ' ').Replace('Д', ' ').Trim() 
+                + "', '" + dom + "', '-')";
             cmd = new NpgsqlCommand(cmdText, conn);
             cmd.ExecuteNonQuery();
             conn.Close();
@@ -1218,11 +1298,11 @@ where upper(ul.ulicareg || ' ' || ul.ulica || '  д.' || d.ndom) = upper('" + ad
             return nzp_kvar;
         }
 
-        public void InsertDateOpen(int nzp, string dat_s)
+        public void InsertDateOpen(string database, int nzp, string dat_s)
         {
-            string connStr = "Server=192.168.1.25;Database=billAuk;User ID=postgres;Password=Admin;CommandTimeout=180000;";
+            string connStr = "Server=192.168.1.25;Database="+ database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
             string cmdText = "INSERT INTO bill01_data.prm_3(nzp, nzp_prm, dat_s, dat_po, val_prm, is_actual, nzp_user, dat_when, cur_unl, nzp_wp, month_calc) " +
-                "values(" + nzp + ", 51,  to_date('" + dat_s + "','dd.mm.yyyy'), to_date('01.01.3000','dd.mm.yyyy'), '1', 1, 88888889, CURRENT_DATE, 0, 25, to_date('01.11.2014','dd.mm.yyyy'))";
+                "values(" + nzp + ", 51,  to_date('" + dat_s + "','dd.mm.yyyy'), to_date('01.01.3000','dd.mm.yyyy'), '1', 1, 1, CURRENT_DATE, 0, 25, to_date('01.11.2014','dd.mm.yyyy'))";
             NpgsqlConnection conn = new NpgsqlConnection(connStr);
             NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
             conn.Open();
@@ -1230,10 +1310,22 @@ where upper(ul.ulicareg || ' ' || ul.ulica || '  д.' || d.ndom) = upper('" + ad
             conn.Close();
         }
 
-        public void InsertPrm1(int nzp, string val_prm, int nzp_prm)
+        public void InsertPrm1(string database, int nzp, string val_prm, int nzp_prm)
         {
-            string connStr = "Server=192.168.1.25;Database=billAuk;User ID=postgres;Password=Admin;CommandTimeout=180000;";
-            string cmdText = "INSERT INTO bill01_data.prm_1(nzp, nzp_prm, dat_s, dat_po, val_prm, is_actual, nzp_user, dat_when, month_calc) " +
+            string connStr = "Server=192.168.1.25;Database="+ database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
+            string cmdText = "INSERT INTO bill01_data.prm_1(nzp, nzp_prm, dat_s, dat_po, val_prm, is_actual, nzp_user, dat_when) " +
+                "values(" + nzp + ", " + nzp_prm + ",  to_date('01.07.2016','dd.mm.yyyy'), to_date('01.01.3000','dd.mm.yyyy'), '" + val_prm + "', 1, 1, CURRENT_DATE)";
+            NpgsqlConnection conn = new NpgsqlConnection(connStr);
+            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
+            conn.Open();
+            cmd.ExecuteNonQuery();
+            conn.Close();
+        }
+
+        public void InsertDomPrm(string database, int nzp, string val_prm, int nzp_prm)
+        {
+            string connStr = "Server=192.168.1.25;Database="+ database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
+            string cmdText = "INSERT INTO bill01_data.prm_2(nzp, nzp_prm, dat_s, dat_po, val_prm, is_actual, nzp_user, dat_when, month_calc) " +
                 "values(" + nzp + ", " + nzp_prm + ",  to_date('01.10.2014','dd.mm.yyyy'), to_date('01.01.3000','dd.mm.yyyy'), '" + val_prm + "', 1, 88888889, CURRENT_DATE, to_date('01.11.2014','dd.mm.yyyy'))";
             NpgsqlConnection conn = new NpgsqlConnection(connStr);
             NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
@@ -1599,9 +1691,9 @@ having count(nzp_kvar)>1";
             }
         }
 
-        public List<string> SelectNzpKvarByPkod(string pkod)
+        public List<string> SelectNzpKvarByPkod(string pkod, string database)
         {
-            string connStr = "Server=192.168.1.25;Database=billAuk;User ID=postgres;Password=Admin;CommandTimeout=180000;";
+            string connStr = "Server=192.168.1.25;Database="+ database + ";User ID=postgres;Password=Admin;CommandTimeout=180000;";
             string cmdText = "SELECT nzp_kvar, num_ls FROM bill01_data.kvar WHERE pkod = " + pkod;
             NpgsqlConnection conn = new NpgsqlConnection(connStr);
             NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
@@ -2577,6 +2669,56 @@ having count(nzp_kvar)>1";
                 else
                     return null;
 
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+        }
+
+        public DataTable SelectActcheckInfo()
+        {
+            connStr = "Server=85.140.61.250;Database=gkh_samara;User ID=bars;Password=md5SM3tv;CommandTimeout=180000;";
+            //string cmdText = "SELECT gro.gkh_code, gro.address from GKH_REALITY_OBJECT gro where replace(lower(GRO.ADDRESS), ' ','') LIKE replace(lower('%" + ulica + "%'), ' ','') " +
+            //    //" and MUNICIPALITY_ID in (21690, 21691, 21692, 21693, 21694, 21695, 21696, 21697, 21698) and replace(lower(GRO.ADDRESS), ' ','') LIKE replace(lower('%д. " + dom + "'), ' ','')";
+            //    " and MUNICIPALITY_ID in (21686) and replace(lower(GRO.ADDRESS), ' ','') LIKE replace(lower('%д. " + dom + "'), ' ','')";
+            string cmdText = @"SELECT to_char(gd1.document_date, 'dd.mm.yyyy'), gro.address, to_char(gap.date_check, 'dd.mm.yyyy'), to_char(gap.date_start, 'HH:MI'), to_char(gap.date_end, 'HH:MI'), string_agg(insp.fio, ','), 
+t.name, t.codepin, gd2.document_number, to_char(gd2.document_date, 'dd.mm.yyyy'), t2.date_plan_removal, CASE WHEN t2.date_fact_removal < current_date THEN 'выполнено' ELSE 'невыполненно' END as close_
+FROM gji_document gd
+INNER JOIN gji_document gd1 on gd1.document_number = gd.document_number and gd1.type_document = 20
+INNER JOIN gji_actcheck_robject gar on gar.actcheck_id = gd1.id
+INNER JOIN gkh_reality_object gro on gro.id = gar.reality_object_id
+INNER JOIN gji_document_inspector gdi on gdi.DOCUMENT_ID = gd.ID
+INNER JOIN gkh_dict_inspector insp on insp.id = gdi.INSPECTOR_ID
+LEFT JOIN gji_actcheck_period gap on gap.actcheck_id = gd1.id
+LEFT JOIN 
+(
+	SELECT name, codepin, givs.document_id 
+	from gji_inspection_viol_stage givs
+	INNER JOIN gji_inspection_violation giv on giv.id = givs.inspection_viol_id
+	INNER JOIN gji_dict_violation gdv on gdv.id = giv.violation_id
+) t on t.document_id = gd1.id
+LEFT JOIN gji_document gd2 on gd2.document_number = gd.document_number and gd2.type_document = 50
+LEFT JOIN 
+(
+	SELECT to_char(giv.date_plan_removal, 'dd.mm.yyyy') as date_plan_removal, giv.date_fact_removal, givs.document_id 
+	from gji_inspection_viol_stage givs
+	INNER JOIN gji_inspection_violation giv on giv.id = givs.inspection_viol_id
+) t2 on t2.document_id = gd2.id
+where gd.document_number = 'ССр-33507' and gd.type_document = 10
+group by 1,2,3,4,5,7,8,9,10,11,12";
+
+            //string cmdText = "SELECT id FROM realty_object where mu_name LIKE '%Волжский р-н%'";
+            //string cmdText = "SELECT * FROM employees";
+            NpgsqlConnection conn = new NpgsqlConnection(connStr);
+            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
+            //cmd.Parameters.Add("surname", surname);
+            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            try
+            {
+                da.Fill(dt);
+                return dt;
             }
             catch (Exception e)
             {

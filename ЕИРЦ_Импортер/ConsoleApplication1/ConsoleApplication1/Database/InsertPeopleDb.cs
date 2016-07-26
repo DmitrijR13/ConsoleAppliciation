@@ -73,6 +73,59 @@ namespace ConsoleApplication1.Database
 
         }
 
+        public string InsertPeople5(string gkh_code, string flat, string total_area, string useful_area, string privatized, string residents_count, string fio)
+        {
+            //string cmdText = "SELECT gro.id from GKH_REALITY_OBJECT gro inner join GKH_DICT_MUNICIPALITY gdm on GDM.ID = GRO.MUNICIPALITY_ID where GDM.NAME LIKE '%г. Самара, Красноглинский р-н' AND replace(lower(GRO.ADDRESS), ' ','') = replace(lower('" + gkh_code + "'), ' ','')";
+            string cmdText = "SELECT id from GKH_REALITY_OBJECT where gkh_code = '" + gkh_code + "'";
+            NpgsqlConnection conn = new NpgsqlConnection(connStr);
+            NpgsqlCommand cmd = new NpgsqlCommand(cmdText, conn);
+            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            int id;
+            conn.Open();
+            da.Fill(dt);
+            id = Convert.ToInt32(dt.Rows[0][0]);
+            int priv = 30;
+            if (privatized == "да" || privatized == "Да")
+                priv = 10;
+            else if (privatized == "Не задано" || privatized == "не задано")
+                priv = 30;
+            else
+                priv = 20;
+            if (string.IsNullOrEmpty(total_area) || total_area == " ")
+                total_area = "0";
+            if (string.IsNullOrEmpty(useful_area) || useful_area == " ")
+                useful_area = "0";
+            if (string.IsNullOrEmpty(residents_count) || residents_count == " ")
+                residents_count = "0";
+
+            if (!houses.Contains(id.ToString()))
+            {
+                houses.Add(id.ToString());
+                string cmdText2 = "DELETE FROM gkh_obj_apartment_info where reality_object_id = " + id;
+                NpgsqlCommand cmd2 = new NpgsqlCommand(cmdText2, conn);
+                cmd2.ExecuteNonQuery();
+            }
+
+            string cmdText1 = "INSERT INTO gkh_obj_apartment_info (object_version, object_create_date, object_edit_date, num_apartment, area_total, count_people, privatized," +
+                    "reality_object_id, fio_owner, area_living) VALUES(0, CURRENT_DATE, CURRENT_DATE, '" + flat + "'," + total_area.Replace(',', '.')
+                    + "," + residents_count + "," + priv + "," + id + ",'" + fio + "', " + useful_area.Replace(',', '.') + ")";
+            NpgsqlCommand cmd1 = new NpgsqlCommand(cmdText1, conn);
+            try
+            {
+                cmd1.ExecuteNonQuery();
+                return "ЗАГРУЖЕНО";
+            }
+            catch (Exception e)
+            {
+                string err = gkh_code + "||" + flat + "||" + e.Message;
+                return err;
+            }
+            finally
+            { conn.Close(); }
+
+        }
+
         public string InsertPeople(string gkh_code, string flat, string fio, string area)
         {
             string cmdText = "SELECT id from GKH_REALITY_OBJECT where gkh_code = " + gkh_code;
